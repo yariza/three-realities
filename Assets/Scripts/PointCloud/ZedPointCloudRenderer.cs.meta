@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: b24985d4ab48e4145940bb22c5704d44
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _pointCloudShader: {fileID: 4800000, guid: 47acaa73aecac184c8651cff88979967, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
