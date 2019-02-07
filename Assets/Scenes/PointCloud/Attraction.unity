@@ -248,6 +248,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _pointCloudShader: {fileID: 4800000, guid: e792c1c0bd038954cb8bb60e6d2a8d1c, type: 3}
+  _resolutionScale: 1.2
   _pointSize: 0.05
 --- !u!114 &73205510
 MonoBehaviour:
@@ -1307,6 +1308,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _pointCloudShader: {fileID: 4800000, guid: e792c1c0bd038954cb8bb60e6d2a8d1c, type: 3}
+  _resolutionScale: 1.2
   _pointSize: 0.05
 --- !u!114 &381533989
 MonoBehaviour:

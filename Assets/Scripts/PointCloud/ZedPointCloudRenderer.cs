@@ -11,9 +11,12 @@ public class ZedPointCloudRenderer : MonoBehaviour
 	[SerializeField]
 	Shader _pointCloudShader;
 
+	[SerializeField, Range(1, 2)]
+	float _resolutionScale = 1;
+
 	[SerializeField]
 	float _pointSize = 0.05f;
-		
+
 	#endregion
 
 	#region Private fields
@@ -62,7 +65,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 	void Update()
 	{
 		if (_material == null) return;
-		
+
 		_material.SetFloat(_pointSizeId, _pointSize);
 		_material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
 		_material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
@@ -81,7 +84,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 	// 	_material.SetPass(0);
 	// 	Graphics.DrawProcedural(MeshTopology.Points, 1, _numberOfPoints);
 	// }
-		
+
 	#endregion
 
 	#region Zed events
@@ -96,8 +99,8 @@ public class ZedPointCloudRenderer : MonoBehaviour
 		_colorTexture = _zed.CreateTextureImageType(right ? sl.VIEW.RIGHT : sl.VIEW.LEFT);
 		_depthTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.DEPTH_RIGHT : sl.MEASURE.DEPTH);
 
-		var pointWidth = _zed.ImageWidth * 3 / 2;
-		var pointHeight = _zed.ImageHeight * 3 / 2;
+		var pointWidth = Mathf.FloorToInt(_zed.ImageWidth * _resolutionScale);
+		var pointHeight = Mathf.FloorToInt(_zed.ImageHeight * _resolutionScale);
 		_numberOfPoints = pointWidth * pointHeight;
 
 		_material = new Material(_pointCloudShader);
@@ -132,7 +135,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 		Debug.Log(topLeft);
 		var bottomRight = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(0.5f, -0.5f, 0));
 		Debug.Log(bottomRight);
-		
+
 		_ready = true;
 
 		var commandBuffer = new CommandBuffer();
@@ -145,7 +148,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 	{
 		_ready = false;
 	}
-		
+
 	#endregion
 
 	#region Private methods
@@ -160,6 +163,6 @@ public class ZedPointCloudRenderer : MonoBehaviour
         return Mathf.Atan(1 / projection[1, 1]) * 2.0f;
     }
 
-		
+
 	#endregion
 }
