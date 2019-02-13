@@ -109,6 +109,12 @@ public class ZedPointCloudRenderer : MonoBehaviour
 		_material.SetTexture("_DepthTex", _depthTexture);
 		_material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
 
+		var handMask = GetComponent<HandMaskRenderer>();
+		if (handMask != null)
+		{
+			_material.SetTexture("_HandMaskTex", handMask.texture);
+		}
+
 		//Move the plane with the optical centers.
 		float plane_distance =0.15f;
 		Vector4 opticalCenters = _zed.ComputeOpticalCenterOffsets(plane_distance);
