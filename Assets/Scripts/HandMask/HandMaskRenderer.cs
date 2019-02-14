@@ -18,9 +18,10 @@ public class HandMaskRenderer : MonoBehaviour
 	}
 
 	Camera _camera;
+	CommandBuffer _commandBuffer;
 
-    void Start()
-    {
+	void Awake()
+	{
 		_camera = GetComponent<Camera>();
 		var width = _camera.pixelWidth;
 		var height = _camera.pixelHeight;
@@ -29,21 +30,34 @@ public class HandMaskRenderer : MonoBehaviour
 
 		_texture = new RenderTexture(descriptor);
 
-		var commandBuffer = new CommandBuffer();
-		commandBuffer.SetRenderTarget(new RenderTargetIdentifier(_texture));
-		commandBuffer.ClearRenderTarget(false, true, Color.black);
-		for (int i = 0; i < _handMaskRenderers.Count; i++)
-		{
-			var renderer = _handMaskRenderers[i];
-			commandBuffer.DrawRenderer(renderer, _handMaskMaterial);
-		}
-		commandBuffer.SetRenderTarget(null as RenderTexture);
-
-		_camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, commandBuffer);
-
 		var right = _camera.stereoTargetEye == StereoTargetEyeMask.Right;
 		Shader.SetGlobalTexture(right ? "_HandMaskRight" : "_HandMaskLeft", _texture);
+	}
+
+    void OnEnable()
+    {
+		if (_commandBuffer == null) {
+			_commandBuffer = new CommandBuffer();
+			_commandBuffer.SetRenderTarget(new RenderTargetIdentifier(_texture));
+			_commandBuffer.ClearRenderTarget(false, true, Color.black);
+			for (int i = 0; i < _handMaskRenderers.Count; i++)
+			{
+				var renderer = _handMaskRenderers[i];
+				_commandBuffer.DrawRenderer(renderer, _handMaskMaterial);
+			}
+			_commandBuffer.SetRenderTarget(null as RenderTexture);
+		}
+
+		_camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, _commandBuffer);
     }
+
+	void OnDisable()
+	{
+		if (_commandBuffer != null)
+		{
+			_camera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, _commandBuffer);
+		}
+	}
 
     void Update()
     {

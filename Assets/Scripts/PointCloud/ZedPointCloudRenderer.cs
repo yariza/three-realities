@@ -37,6 +37,8 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
 	Matrix4x4 _cameraMatrix;
 
+	CommandBuffer _commandBuffer;
+
 	#endregion
 
 	#region Unity events
@@ -54,12 +56,22 @@ public class ZedPointCloudRenderer : MonoBehaviour
 	{
 		ZEDManager.OnZEDReady += OnZedReady;
 		ZEDManager.OnZEDDisconnected += OnZedDisconnected;
+
+		if (_commandBuffer != null)
+		{
+			_camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+		}
 	}
 
 	void OnDisable()
 	{
 		ZEDManager.OnZEDReady -= OnZedReady;
 		ZEDManager.OnZEDDisconnected -= OnZedDisconnected;
+
+		if (_commandBuffer != null)
+		{
+			_camera.RemoveCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+		}
 	}
 
 	void Update()
@@ -144,10 +156,10 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
 		_ready = true;
 
-		var commandBuffer = new CommandBuffer();
-		commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
+		_commandBuffer = new CommandBuffer();
+		_commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
 
-		_camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, commandBuffer);
+		_camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
 	}
 
 	void OnZedDisconnected()

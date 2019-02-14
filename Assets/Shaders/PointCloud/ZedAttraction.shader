@@ -1,4 +1,4 @@
-﻿Shader "Unlit/ZedHandMaskTest"
+﻿Shader "Unlit/ZedAttraction"
 {
 	Properties
 	{
@@ -72,20 +72,36 @@
 				dir = mul(_Position, dir);
 				dir.xyz *= depth / dir.z;
 
+				float4 origDir = dir;
+				origDir.z *= -1.0;
+				origDir = mul(UNITY_MATRIX_P, float4(origDir.xyz, 1.0));
+
+				float4 screenCoord = ComputeScreenPos(origDir);
+				screenCoord.xy /= screenCoord.w;
+				float mask = tex2Dlod(_HandMaskTex, float4(screenCoord.x, screenCoord.y, 0, 0)).r;
+
 				// model matrix is identity
 				float3 worldPos = mul(_InverseViewMatrix, dir).xyz;
+
+				float3 center = float3(0, 0.75, 0);
+				float3 distDir = worldPos - center;
+				distDir.y = 0;
+				float dist = length(distDir);
+				float offset = (sin(dist * 10.0 - _Time.y * 3.0)) * 0.1;
+				offset *= pow(2.0, -dist);
+				offset *= (1.0 - mask);
+
+				worldPos.y += offset;
+
+				// worldPos += normalize(distDir) * offset * 0.1;
+
 				dir = mul(_ViewMatrix, float4(worldPos, 1.0));
 
 				dir.z *= -1.0;
 				dir = mul(UNITY_MATRIX_P, float4(dir.xyz, 1.0));
 
-				float4 screenCoord = ComputeScreenPos(dir);
-				screenCoord.xy /= screenCoord.w;
-				float mask = tex2Dlod(_HandMaskTex, float4(screenCoord.x, screenCoord.y, 0, 0)).r;
-
 				o.position = dir;
 
-				float dist = length(worldPos - _CameraPosition);
 				float3 color = tex2Dlod(_ColorTex, float4(uv, 0.0, 0.0)).bgr;
 				// o.color = float4(color, 1.0);
 
@@ -93,8 +109,7 @@
 				alpha = frac(dist * -0.05 + _Time.y * 0.15);
 				alpha = pow(saturate(1.0 - alpha * 1.7), 1.5);
 				// alpha *= saturate(0.8 / dist);
-				o.color = float4(color * saturate(mask), 1.0);
-				// o.color = float4(screenCoord.x, screenCoord.y, 1.0, 1.0);
+				o.color = float4(color, 1.0);
 
 				o.psize = _PointSize;
 
