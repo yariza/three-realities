@@ -6,170 +6,189 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(Camera))]
 public class ZedPointCloudRenderer : MonoBehaviour
 {
-	#region Serialized fields
+    #region Serialized fields
 
-	[SerializeField]
-	Shader _pointCloudShader;
+    [SerializeField]
+    Shader _pointCloudShader;
 
-	[SerializeField, Range(1, 2)]
-	float _resolutionScale = 1;
+    [SerializeField, Range(1, 2)]
+    float _resolutionScale = 1;
 
-	[SerializeField]
-	float _pointSize = 0.05f;
+    [SerializeField]
+    float _pointSize = 0.05f;
 
-	#endregion
+    [SerializeField]
+    PhysicsGrid _grid;
 
-	#region Private fields
+    #endregion
 
-	Camera _camera;
-	// Texture2D _xyzTexture;
-	Texture2D _depthTexture;
-	Texture2D _colorTexture;
-	Material _material;
-	bool _ready = false;
-	int _numberOfPoints;
-	sl.ZEDCamera _zed;
+    #region Private fields
 
-	int _pointSizeId;
-	int _inverseViewMatrixId;
-	int _viewMatrixId;
-	int _cameraPositionId;
+    Camera _camera;
+    // Texture2D _xyzTexture;
+    Texture2D _depthTexture;
+    Texture2D _colorTexture;
+    Material _material;
+    bool _ready = false;
+    int _numberOfPoints;
+    sl.ZEDCamera _zed;
 
-	Matrix4x4 _cameraMatrix;
+    int _pointSizeId;
+    int _inverseViewMatrixId;
+    int _viewMatrixId;
+    int _cameraPositionId;
 
-	CommandBuffer _commandBuffer;
+    Matrix4x4 _cameraMatrix;
 
-	#endregion
+    CommandBuffer _commandBuffer;
 
-	#region Unity events
+    #endregion
 
-	void Awake()
-	{
-		_camera = GetComponent<Camera>();
-		_pointSizeId = Shader.PropertyToID("_PointSize");
-		_inverseViewMatrixId = Shader.PropertyToID("_InverseViewMatrix");
-		_viewMatrixId = Shader.PropertyToID("_ViewMatrix");
-		_cameraPositionId = Shader.PropertyToID("_CameraPosition");
-	}
+    #region Unity events
 
-	void OnEnable()
-	{
-		ZEDManager.OnZEDReady += OnZedReady;
-		ZEDManager.OnZEDDisconnected += OnZedDisconnected;
+    void Awake()
+    {
+        _camera = GetComponent<Camera>();
+        _pointSizeId = Shader.PropertyToID("_PointSize");
+        _inverseViewMatrixId = Shader.PropertyToID("_InverseViewMatrix");
+        _viewMatrixId = Shader.PropertyToID("_ViewMatrix");
+        _cameraPositionId = Shader.PropertyToID("_CameraPosition");
 
-		if (_commandBuffer != null)
-		{
-			_camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
-		}
-	}
+        if (_grid == null)
+        {
+            _grid = FindObjectOfType<PhysicsGrid>();
+        }
+    }
 
-	void OnDisable()
-	{
-		ZEDManager.OnZEDReady -= OnZedReady;
-		ZEDManager.OnZEDDisconnected -= OnZedDisconnected;
+    void OnEnable()
+    {
+        ZEDManager.OnZEDReady += OnZedReady;
+        ZEDManager.OnZEDDisconnected += OnZedDisconnected;
 
-		if (_commandBuffer != null)
-		{
-			_camera.RemoveCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
-		}
-	}
+        if (_commandBuffer != null)
+        {
+            _camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+        }
+    }
 
-	void Update()
-	{
-		if (_material == null) return;
+    void OnDisable()
+    {
+        ZEDManager.OnZEDReady -= OnZedReady;
+        ZEDManager.OnZEDDisconnected -= OnZedDisconnected;
 
-		_material.SetFloat(_pointSizeId, _pointSize);
-		_material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
-		_material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
-		_material.SetVector(_cameraPositionId, _camera.transform.position);
-	}
+        if (_commandBuffer != null)
+        {
+            _camera.RemoveCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+        }
+    }
 
-	// void OnRenderObject()
-	// {
-	// 	if (!_ready) return;
-	// 	var curCamera = Camera.current;
-	// 	var scene = !curCamera.stereoEnabled;
-	// 	if (curCamera.stereoTargetEye != _camera.stereoTargetEye) return;
+    void Update()
+    {
+        if (_material == null) return;
 
-	// 	_material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
-	// 	_material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
-	// 	_material.SetPass(0);
-	// 	Graphics.DrawProcedural(MeshTopology.Points, 1, _numberOfPoints);
-	// }
+        _material.SetFloat(_pointSizeId, _pointSize);
+        _material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
+        _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
+        _material.SetVector(_cameraPositionId, _camera.transform.position);
 
-	#endregion
+		_material.SetVector(_grid.idPhysicsGridSize, _grid.size);
+		_material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
+		_material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
+		_material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+    }
 
-	#region Zed events
+    // void OnRenderObject()
+    // {
+    // 	if (!_ready) return;
+    // 	var curCamera = Camera.current;
+    // 	var scene = !curCamera.stereoEnabled;
+    // 	if (curCamera.stereoTargetEye != _camera.stereoTargetEye) return;
 
-	void OnZedReady()
-	{
-		_zed = sl.ZEDCamera.GetInstance();
+    // 	_material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
+    // 	_material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
+    // 	_material.SetPass(0);
+    // 	Graphics.DrawProcedural(MeshTopology.Points, 1, _numberOfPoints);
+    // }
 
-		bool right = _camera.stereoTargetEye == StereoTargetEyeMask.Right;
+    #endregion
 
-		// _xyzTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.XYZ_RIGHT : sl.MEASURE.XYZ);
-		_colorTexture = _zed.CreateTextureImageType(right ? sl.VIEW.RIGHT : sl.VIEW.LEFT);
-		_depthTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.DEPTH_RIGHT : sl.MEASURE.DEPTH);
+    #region Zed events
 
-		var pointWidth = Mathf.FloorToInt(_zed.ImageWidth * _resolutionScale);
-		var pointHeight = Mathf.FloorToInt(_zed.ImageHeight * _resolutionScale);
-		_numberOfPoints = pointWidth * pointHeight;
+    void OnZedReady()
+    {
+        _zed = sl.ZEDCamera.GetInstance();
 
-		_material = new Material(_pointCloudShader);
-		// _material.SetTexture("_XYZTex", _xyzTexture);
-		_material.SetTexture("_ColorTex", _colorTexture);
-		_material.SetTexture("_DepthTex", _depthTexture);
-		_material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
+        bool right = _camera.stereoTargetEye == StereoTargetEyeMask.Right;
 
-		var handMask = GetComponent<HandMaskRenderer>();
-		if (handMask != null)
-		{
-			_material.SetTexture("_HandMaskTex", handMask.texture);
-		}
+        // _xyzTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.XYZ_RIGHT : sl.MEASURE.XYZ);
+        _colorTexture = _zed.CreateTextureImageType(right ? sl.VIEW.RIGHT : sl.VIEW.LEFT);
+        _depthTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.DEPTH_RIGHT : sl.MEASURE.DEPTH);
 
-		//Move the plane with the optical centers.
-		float plane_distance =0.15f;
-		Vector4 opticalCenters = _zed.ComputeOpticalCenterOffsets(plane_distance);
+        var pointWidth = Mathf.FloorToInt(_zed.ImageWidth * _resolutionScale);
+        var pointHeight = Mathf.FloorToInt(_zed.ImageHeight * _resolutionScale);
+        _numberOfPoints = pointWidth * pointHeight;
 
-		var position = right ? new Vector3(opticalCenters.z, -1.0f * opticalCenters.w,plane_distance)
-							 : new Vector3(opticalCenters.x, -1.0f * opticalCenters.y,plane_distance);
-		Matrix4x4 projMatrix = _zed.Projection;
-		var near = 0.1f;
-		var far = 500f;
+        _material = new Material(_pointCloudShader);
+        // _material.SetTexture("_XYZTex", _xyzTexture);
+        _material.SetTexture("_ColorTex", _colorTexture);
+        _material.SetTexture("_DepthTex", _depthTexture);
+        _material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
+
+        var handMask = GetComponent<HandMaskRenderer>();
+        if (handMask != null)
+        {
+            _material.SetTexture("_HandMaskTex", handMask.texture);
+        }
+
+		_material.SetVector(_grid.idPhysicsGridSize, _grid.size);
+		_material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
+		_material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
+		_material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+
+        //Move the plane with the optical centers.
+        float plane_distance = 0.15f;
+        Vector4 opticalCenters = _zed.ComputeOpticalCenterOffsets(plane_distance);
+
+        var position = right ? new Vector3(opticalCenters.z, -1.0f * opticalCenters.w, plane_distance)
+                             : new Vector3(opticalCenters.x, -1.0f * opticalCenters.y, plane_distance);
+        Matrix4x4 projMatrix = _zed.Projection;
+        var near = 0.1f;
+        var far = 500f;
         projMatrix[2, 2] = -(far + near) / (far - near);
         projMatrix[2, 3] = -(2.0f * far * near) / (far - near);
 
-		var aspect = 16f / 9f;
-		var fov = GetFOVYFromProjectionMatrix(projMatrix);
-		float height = Mathf.Tan(0.5f * fov) * Vector3.Distance(position, Vector3.zero) * 2;
-		var scale = new Vector3((height*aspect), height, 1);
+        var aspect = 16f / 9f;
+        var fov = GetFOVYFromProjectionMatrix(projMatrix);
+        float height = Mathf.Tan(0.5f * fov) * Vector3.Distance(position, Vector3.zero) * 2;
+        var scale = new Vector3((height * aspect), height, 1);
 
-		_cameraMatrix = Matrix4x4.TRS(position, Quaternion.identity, scale);
-		Debug.Log("position " + position.ToString("0.0000"));
-		Debug.Log("scale " + scale.ToString("0.0000"));
-		_material.SetMatrix("_Position", _cameraMatrix);
+        _cameraMatrix = Matrix4x4.TRS(position, Quaternion.identity, scale);
+        Debug.Log("position " + position.ToString("0.0000"));
+        Debug.Log("scale " + scale.ToString("0.0000"));
+        _material.SetMatrix("_Position", _cameraMatrix);
 
-		var topLeft = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(-0.5f, 0.5f, 0));
-		Debug.Log(topLeft);
-		var bottomRight = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(0.5f, -0.5f, 0));
-		Debug.Log(bottomRight);
+        var topLeft = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(-0.5f, 0.5f, 0));
+        Debug.Log(topLeft);
+        var bottomRight = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(0.5f, -0.5f, 0));
+        Debug.Log(bottomRight);
 
-		_ready = true;
+        _ready = true;
 
-		_commandBuffer = new CommandBuffer();
-		_commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
+        _commandBuffer = new CommandBuffer();
 
-		_camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
-	}
+        _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
 
-	void OnZedDisconnected()
-	{
-		_ready = false;
-	}
+        _camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+    }
 
-	#endregion
+    void OnZedDisconnected()
+    {
+        _ready = false;
+    }
 
-	#region Private methods
+    #endregion
+
+    #region Private methods
 
     /// <summary>
     /// Gets the vertical field of view from the given projection matrix, to bypass a round number.
@@ -182,5 +201,5 @@ public class ZedPointCloudRenderer : MonoBehaviour
     }
 
 
-	#endregion
+    #endregion
 }

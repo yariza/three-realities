@@ -5,6 +5,7 @@
         _PointSize("Point Size", Float) = 0.05
         [Toggle] _Distance("Apply Distance", Float) = 1
 		_HandMaskTex("Hand Mask Texture", 2D) = "gray" {}
+		_PhysicsGridPositionTex("Position Texture", 3D) = "white" {}
 	}
 	SubShader
 	{
@@ -16,10 +17,11 @@
 		Pass
 		{
 			CGPROGRAM
+			#pragma target 5.0
 			#pragma vertex vert
 			#pragma fragment frag
 			// make fog work
-			#pragma multi_compile_fog
+			// #pragma multi_compile_fog
 
 			#include "UnityCG.cginc"
 
@@ -30,7 +32,7 @@
 				float3 normal : NORMAL;
                 half psize : PSIZE;
 				// float depth : TEXCOORD0;
-                UNITY_FOG_COORDS(0)
+                // UNITY_FOG_COORDS(0)
 			};
 
 			sampler2D _DepthTex;
@@ -52,6 +54,13 @@
 			float4 _HandRightPosition;
 
 			sampler2D _HandMaskTex;
+
+			Texture3D _PhysicsGridPositionTex;
+			float3 _PhysicsGridSize;
+			float3 _PhysicsGridSizeInv;
+			// float4 _PhysicsGridPositionTex_TexelSize;
+			Texture3D _PhysicsGridVelocityTex;
+			SamplerState _TrilinearRepeatSampler;
 
 			v2f vert (appdata_full v, uint vertex_id : SV_VertexID, uint instance_id : SV_InstanceID)
 			{
@@ -83,15 +92,19 @@
 				// model matrix is identity
 				float3 worldPos = mul(_InverseViewMatrix, dir).xyz;
 
-				float3 center = float3(0, 0.75, 0);
-				float3 distDir = worldPos - center;
-				distDir.y = 0;
-				float dist = length(distDir);
-				float offset = (sin(dist * 10.0 - _Time.y * 3.0)) * 0.1;
-				offset *= pow(2.0, -dist);
-				offset *= (1.0 - mask);
+				float3 gridIndex = worldPos * _PhysicsGridSizeInv.xyz;
 
-				worldPos.y += offset;
+				float3 offset = _PhysicsGridPositionTex.SampleLevel(_TrilinearRepeatSampler, gridIndex, 0).rgb;
+
+				// float3 center = float3(0, 0.75, 0);
+				// float3 distDir = worldPos - center;
+				// distDir.y = 0;
+				// float dist = length(distDir);
+				// float offset = (sin(dist * 10.0 - _Time.y * 3.0)) * 0.1;
+				// offset *= pow(2.0, -dist);
+				// offset *= (1.0 - mask);
+
+				worldPos += offset;
 
 				// worldPos += normalize(distDir) * offset * 0.1;
 
@@ -103,11 +116,13 @@
 				o.position = dir;
 
 				float3 color = tex2Dlod(_ColorTex, float4(uv, 0.0, 0.0)).bgr;
+				color *= frac(gridIndex);
+				// color *= offset;
 				// o.color = float4(color, 1.0);
 
-				float alpha;
-				alpha = frac(dist * -0.05 + _Time.y * 0.15);
-				alpha = pow(saturate(1.0 - alpha * 1.7), 1.5);
+				// float alpha;
+				// alpha = frac(dist * -0.05 + _Time.y * 0.15);
+				// alpha = pow(saturate(1.0 - alpha * 1.7), 1.5);
 				// alpha *= saturate(0.8 / dist);
 				o.color = float4(color, 1.0);
 
@@ -123,7 +138,7 @@
 				fixed4 col = fixed4(i.color);
 				// outDepth = i.depth;
 				// apply fog
-				UNITY_APPLY_FOG(i.fogCoord, col);
+				// UNITY_APPLY_FOG(i.fogCoord, col);
 				return col;
 			}
 			ENDCG

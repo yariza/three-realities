@@ -1,16 +1,61 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel Init
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-RWTexture2D<float4> Result;
+RWTexture3D<float4> _PhysicsGridPositionTex;
+RWTexture3D<float4> _PhysicsGridVelocityTex;
+uint3 _PhysicsGridResolution;
+float3 _PhysicsGridSize;
+float3 _PhysicsGridSizeInv;
+float _Time;
 
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+[numthreads(8,8,8)]
+void Init(uint3 id : SV_DISPATCHTHREADID)
 {
-	// TODO: insert actual code here!
+	if (any(id.xyz > _PhysicsGridResolution)) return;
 
-	Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+	_PhysicsGridPositionTex[id.xyz] = float4(0,0,0,0);
+	_PhysicsGridVelocityTex[id.xyz] = float4(0,0,0,0);
 }
 
+#define MAX_HANDS 2
 
+float3 _GrabStartPositions[MAX_HANDS];
+float3 _GrabCurPositions[MAX_HANDS];
+
+uint _CurGrabIndex;
+float _GrabDist;
+
+[numthreads(8,8,8)]
+void StartGrab(uint3 id : SV_DISPATCHTHREADID)
+{
+	if (any(id.xyz > _PhysicsGridResolution)) return;
+
+	float4 position = _PhysicsGridPositionTex[id.xyz];
+	float3 worldPos = position.xyz + ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
+
+	float3 grabPos = _GrabStartPositions[_CurGrabIndex];
+	grabPos = frac(grabPos * _PhysicsGridSizeInv) * _PhysicsGridSize;
+	float3 dx = worldPos - grabPos;
+	if (dot(dx, dx) < _GrabDist * _GrabDist)
+	{
+		_PhysicsGridPositionTex[id.xyz] = float4(position.xyz, (float)_CurGrabIndex);
+	}
+}
+
+[numthreads(8,8,8)]
+void EndGrab(uint3 id : SV_DISPATCHTHREADID)
+{
+
+}
+
+[numthreads(8,8,8)]
+void UpdateVelocity(uint3 id : SV_DISPATCHTHREADID)
+{
+
+}
+
+[numthreads(8,8,8)]
+void UpdatePosition(uint3 id : SV_DISPATCHTHREADID)
+{
+
+}
