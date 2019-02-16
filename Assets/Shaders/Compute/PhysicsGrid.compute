@@ -1,5 +1,9 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel Init
+#pragma kernel StartGrab
+#pragma kernel EndGrab
+#pragma kernel UpdateVelocity
+#pragma kernel UpdatePosition
 
 RWTexture3D<float4> _PhysicsGridPositionTex;
 RWTexture3D<float4> _PhysicsGridVelocityTex;
