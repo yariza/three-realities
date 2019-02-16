@@ -60,6 +60,15 @@ namespace Leap.Unity {
       }
     }
 
+    [SerializeField]
+    [Range(-0.5f, 0.5f)]
+    private float _deviceOffsetXAxis = 0;
+    public float deviceOffsetXAxis
+    {
+      get { return _deviceOffsetXAxis; }
+      set { _deviceOffsetXAxis = value; }
+    }
+
     [Tooltip("Adjusts the Leap Motion device's virtual height offset from the tracked "
            + "headset position. This should match the vertical offset of the physical "
            + "device with respect to the headset in meters.")]
@@ -149,7 +158,7 @@ namespace Leap.Unity {
     }
 
     // Pre-cull Latching
-    
+
     [Tooltip("Pass updated transform matrices to hands with materials that utilize the "
            + "VertexOffsetShader. Won't have any effect on hands that don't take into "
            + "account shader-global vertex offsets in their material shaders.")]
@@ -174,6 +183,9 @@ namespace Leap.Unity {
     protected Matrix4x4[] _transformArray = new Matrix4x4[2];
     private Pose? _trackingBaseDeltaPose = null;
 
+    // BEGIN EDIT YUJIN
+    [SerializeField]
+    // END EDIT YUJIN
     private Camera _cachedCamera;
     private Camera cachedCamera {
       get {
@@ -218,7 +230,11 @@ namespace Leap.Unity {
 
     protected override void Start() {
       base.Start();
+      // BEGIN EDIT YUJIN
+      if (_cachedCamera == null) {
       _cachedCamera = GetComponent<Camera>();
+      }
+      // END EDIT YUJIN
       if (_deviceOffsetMode == DeviceOffsetMode.Transform && _deviceOrigin == null) {
         Debug.LogError("Cannot use the Transform device offset mode without " +
                        "specifying a Transform to use as the device origin.", this);
@@ -230,6 +246,11 @@ namespace Leap.Unity {
       manualUpdateHasBeenCalledSinceUpdate = false;
       base.Update();
       imageTimeStamp = _leapController.FrameTimestamp();
+      // BEGIN EDIT YUJIN
+      if (_cachedCamera.gameObject != gameObject) {
+      OnPreCull();
+      }
+      // END EDIT YUJIN
     }
 
     void LateUpdate() {
@@ -260,7 +281,7 @@ namespace Leap.Unity {
       // Use _tweenImageWarping
       var currCenterRotation = XRSupportUtil.GetXRNodeCenterEyeLocalRotation();
 
-      var imageReferenceRotation = _temporalWarpingMode != TemporalWarpingMode.Off 
+      var imageReferenceRotation = _temporalWarpingMode != TemporalWarpingMode.Off
                                                         ? pastRotation
                                                         : currCenterRotation;
 
@@ -292,7 +313,7 @@ namespace Leap.Unity {
         _trackingBaseDeltaPose = _cachedCamera.transform.ToLocalPose()
                                    * trackedPose.inverse;
       }
-      
+
       // This way, we always track a scene-space tracked pose.
       Pose effTransformPose = _trackingBaseDeltaPose.Value * trackedPose;
 
@@ -375,7 +396,8 @@ namespace Leap.Unity {
         currentPose.rotation = deviceOrigin.rotation;
       } else if (!Application.isPlaying) {
         currentPose.position = currentPose.rotation * Vector3.up * deviceOffsetYAxis
-                               + currentPose.rotation * Vector3.forward * deviceOffsetZAxis;
+                               + currentPose.rotation * Vector3.forward * deviceOffsetZAxis
+                               + currentPose.rotation * Vector3.right * deviceOffsetXAxis;
         currentPose.rotation = Quaternion.Euler(deviceTiltXAxis, 0f, 0f);
         currentPose = transform.ToLocalPose().Then(currentPose);
       } else {
@@ -392,7 +414,8 @@ namespace Leap.Unity {
       if (Application.isPlaying) {
         if (_deviceOffsetMode != DeviceOffsetMode.Transform) {
           warpedPosition += warpedRotation * Vector3.up * deviceOffsetYAxis
-                          + warpedRotation * Vector3.forward * deviceOffsetZAxis;
+                          + warpedRotation * Vector3.forward * deviceOffsetZAxis
+                          + currentPose.rotation * Vector3.right * deviceOffsetXAxis;
           warpedRotation *= Quaternion.Euler(deviceTiltXAxis, 0f, 0f);
         }
 

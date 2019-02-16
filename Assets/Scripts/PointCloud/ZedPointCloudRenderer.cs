@@ -40,6 +40,9 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     Matrix4x4 _cameraMatrix;
 
+	ZEDRenderingPlane _renderingPlane;
+	bool _gotTextures = false;
+
     CommandBuffer _commandBuffer;
 
     #endregion
@@ -49,6 +52,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
     void Awake()
     {
         _camera = GetComponent<Camera>();
+		_renderingPlane = GetComponent<ZEDRenderingPlane>();
         _pointSizeId = Shader.PropertyToID("_PointSize");
         _inverseViewMatrixId = Shader.PropertyToID("_InverseViewMatrix");
         _viewMatrixId = Shader.PropertyToID("_ViewMatrix");
@@ -86,6 +90,18 @@ public class ZedPointCloudRenderer : MonoBehaviour
     {
         if (_material == null) return;
 
+		if (!_gotTextures)
+		{
+			if (_renderingPlane.TextureEye != null)
+			{
+				_colorTexture = _renderingPlane.TextureEye;
+				_depthTexture = _renderingPlane.Depth;
+				_material.SetTexture("_ColorTex", _colorTexture);
+				_material.SetTexture("_DepthTex", _depthTexture);
+				_gotTextures = true;
+			}
+		}
+
         _material.SetFloat(_pointSizeId, _pointSize);
         _material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
         _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
@@ -120,9 +136,11 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         bool right = _camera.stereoTargetEye == StereoTargetEyeMask.Right;
 
+		var plane = GetComponent<ZEDRenderingPlane>();
+
         // _xyzTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.XYZ_RIGHT : sl.MEASURE.XYZ);
-        _colorTexture = _zed.CreateTextureImageType(right ? sl.VIEW.RIGHT : sl.VIEW.LEFT);
-        _depthTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.DEPTH_RIGHT : sl.MEASURE.DEPTH);
+        // _colorTexture = _zed.CreateTextureImageType(right ? sl.VIEW.RIGHT : sl.VIEW.LEFT);
+        // _depthTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.DEPTH_RIGHT : sl.MEASURE.DEPTH);
 
         var pointWidth = Mathf.FloorToInt(_zed.ImageWidth * _resolutionScale);
         var pointHeight = Mathf.FloorToInt(_zed.ImageHeight * _resolutionScale);
@@ -130,8 +148,6 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         _material = new Material(_pointCloudShader);
         // _material.SetTexture("_XYZTex", _xyzTexture);
-        _material.SetTexture("_ColorTex", _colorTexture);
-        _material.SetTexture("_DepthTex", _depthTexture);
         _material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
 
         var handMask = GetComponent<HandMaskRenderer>();

@@ -14,7 +14,11 @@ public class ZedLeapCalibrationControl : MonoBehaviour {
 	List<Leap.Unity.CapsuleHand> _hands = new List<Leap.Unity.CapsuleHand>();
 
 	[SerializeField]
+	bool _saveSettings = true;
+
+	[SerializeField]
 	string _playerPrefKey = "leap_offset";
+
 
 	[SerializeField, Range(0.5f, 10)]
 	float _timeBeforeWrite = 2f;
@@ -111,6 +115,8 @@ public class ZedLeapCalibrationControl : MonoBehaviour {
 
 	void SaveOffset(Vector3 position, Quaternion rotation)
 	{
+		if (!_saveSettings) return;
+
 		string posXKey = _playerPrefKey + "_pos_x";
 		PlayerPrefs.SetFloat(posXKey, position.x);
 		string posYKey = _playerPrefKey + "_pos_y";
