@@ -35,6 +35,9 @@ public class PhysicsGrid : MonoBehaviour
         }
     }
 
+	[SerializeField, Range(0, 0.3f)]
+	float _grabDist = 0.1f;
+
 	[SerializeField]
     RenderTexture _positionTexture;
     public RenderTexture positionTexture
@@ -74,14 +77,30 @@ public class PhysicsGrid : MonoBehaviour
         get { return _idPhysicsGridSizeInv; }
     }
 
+	// int _idGrabStartPositions;
+	int _idGrabCurPositions;
+	int _idGrabDeltaPositions;
+	int _idCurGrabIndex;
+	int _idGrabDist;
+
     int _kernelInit;
 	int _kernelStartGrab;
 	int _kernelEndGrab;
 	int _kernelUpdateVelocity;
 	int _kernelUpdatePosition;
 
+	int _groupsX;
+	int _groupsY;
+	int _groupsZ;
+
 	List<InteractionController> _pinchBeginControllers = new List<InteractionController>();
 	List<InteractionController> _pinchEndControllers = new List<InteractionController>();
+
+	const int MAX_HANDS = 2;
+	// Vector4[] _grabStartPositions = new Vector4[MAX_HANDS];
+	Vector4[] _grabCurPositions = new Vector4[MAX_HANDS];
+	Vector4[] _grabPrevPositions = new Vector4[MAX_HANDS];
+	Vector4[] _grabDeltaPositions = new Vector4[MAX_HANDS];
 
     void Awake()
     {
@@ -109,6 +128,11 @@ public class PhysicsGrid : MonoBehaviour
         _idPhysicsGridResolution = Shader.PropertyToID("_PhysicsGridResolution");
         _idPhysicsGridSize = Shader.PropertyToID("_PhysicsGridSize");
 		_idPhysicsGridSizeInv = Shader.PropertyToID("_PhysicsGridSizeInv");
+		// _idGrabStartPositions = Shader.PropertyToID("_GrabStartPositions");
+		_idGrabCurPositions = Shader.PropertyToID("_GrabCurPositions");
+		_idGrabDeltaPositions = Shader.PropertyToID("_GrabDeltaPositions");
+		_idCurGrabIndex = Shader.PropertyToID("_CurGrabIndex");
+		_idGrabDist = Shader.PropertyToID("_GrabDist");
 
         _kernelInit = _computeShader.FindKernel("Init");
 		_kernelStartGrab = _computeShader.FindKernel("StartGrab");
@@ -124,6 +148,8 @@ public class PhysicsGrid : MonoBehaviour
 		manager.OnControllerPinchBegin += OnControllerPinchBegin;
 		manager.OnControllerPinchEnd -= OnControllerPinchEnd;
 		manager.OnControllerPinchEnd += OnControllerPinchEnd;
+		manager.OnControllerPinchStay -= OnControllerPinchStay;
+		manager.OnControllerPinchStay += OnControllerPinchStay;
 	}
 
 	void OnDisable()
@@ -132,6 +158,7 @@ public class PhysicsGrid : MonoBehaviour
 		if (manager == null) return;
 		manager.OnControllerPinchBegin -= OnControllerPinchBegin;
 		manager.OnControllerPinchEnd -= OnControllerPinchEnd;
+		manager.OnControllerPinchStay -= OnControllerPinchStay;
 	}
 
     void Start()
@@ -150,26 +177,61 @@ public class PhysicsGrid : MonoBehaviour
 		_computeShader.SetFloat("_Time", Time.time);
 
         const int groupSizeDim = 8;
-        int groupsX = (_resolution.x + groupSizeDim - 1) / groupSizeDim;
-        int groupsY = (_resolution.y + groupSizeDim - 1) / groupSizeDim;
-        int groupsZ = (_resolution.z + groupSizeDim - 1) / groupSizeDim;
-        _computeShader.Dispatch(_kernelInit, groupsX, groupsY, groupsZ);
+        _groupsX = (_resolution.x + groupSizeDim - 1) / groupSizeDim;
+        _groupsY = (_resolution.y + groupSizeDim - 1) / groupSizeDim;
+        _groupsZ = (_resolution.z + groupSizeDim - 1) / groupSizeDim;
+        _computeShader.Dispatch(_kernelInit, _groupsX, _groupsY, _groupsZ);
     }
 
     void Update()
     {
+        _computeShader.SetTexture(_kernelStartGrab, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelStartGrab, _idPhysicsGridVelocityTex, _velocityTexture);
+
+		// _computeShader.SetVectorArray(_idGrabStartPositions, _grabStartPositions);
+		for (int i = 0; i < MAX_HANDS; i++)
+		{
+			_grabDeltaPositions[i] = _grabCurPositions[i] - _grabPrevPositions[i];
+		}
+		_computeShader.SetVectorArray(_idGrabDeltaPositions, _grabDeltaPositions);
+		_computeShader.SetVectorArray(_idGrabCurPositions, _grabCurPositions);
+
+		_computeShader.SetFloat(_idGrabDist, _grabDist);
+
 		for (int i = _pinchBeginControllers.Count - 1; i >= 0; i--)
 		{
-
+			var controller = _pinchBeginControllers[i];
+			_computeShader.SetInt(_idCurGrabIndex, controller.isRight ? 1 : 0);
+			_computeShader.Dispatch(_kernelStartGrab, _groupsX, _groupsY, _groupsZ);
 
 			_pinchBeginControllers.RemoveAt(i);
 		}
 
+        _computeShader.SetTexture(_kernelEndGrab, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelEndGrab, _idPhysicsGridVelocityTex, _velocityTexture);
+
 		for (int i = _pinchEndControllers.Count - 1; i >= 0; i--)
 		{
-
+			var controller = _pinchEndControllers[i];
+			_computeShader.SetInt(_idCurGrabIndex, controller.isRight ? 1 : 0);
+			_computeShader.Dispatch(_kernelEndGrab, _groupsX, _groupsY, _groupsZ);
 
 			_pinchEndControllers.RemoveAt(i);
+		}
+
+        _computeShader.SetTexture(_kernelUpdatePosition, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelUpdatePosition, _idPhysicsGridVelocityTex, _velocityTexture);
+
+		_computeShader.Dispatch(_kernelUpdatePosition, _groupsX, _groupsY, _groupsZ);
+
+        _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridVelocityTex, _velocityTexture);
+
+		_computeShader.Dispatch(_kernelUpdateVelocity, _groupsX, _groupsY, _groupsZ);
+
+		for (int i = 0; i < MAX_HANDS; i++)
+		{
+			_grabPrevPositions[i] = _grabCurPositions[i];
 		}
     }
 
@@ -178,13 +240,23 @@ public class PhysicsGrid : MonoBehaviour
 	void OnControllerPinchBegin(InteractionController controller)
 	{
 		_pinchBeginControllers.Add(controller);
-		Debug.Log("pinch begin " + (controller.isLeft ? "left" : "right"));
+		// Debug.Log("pinch begin " + (controller.isLeft ? "left" : "right"));
+		var index = controller.isRight ? 1 : 0;
+		var pinchPos = controller.GetPinchPosition();
+		_grabPrevPositions[index] = _grabCurPositions[index] = pinchPos;
+	}
+
+	void OnControllerPinchStay(InteractionController controller)
+	{
+		var index = controller.isRight ? 1 : 0;
+		var pinchPos = controller.GetPinchPosition();
+		_grabCurPositions[index] = pinchPos;
 	}
 
 	void OnControllerPinchEnd(InteractionController controller)
 	{
 		_pinchEndControllers.Add(controller);
-		Debug.Log("pinch end " + (controller.isLeft ? "left" : "right"));
+		// Debug.Log("pinch end " + (controller.isLeft ? "left" : "right"));
 	}
 
 	#endregion

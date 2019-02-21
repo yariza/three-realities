@@ -152,7 +152,7 @@ public class ZEDManager : MonoBehaviour
     /// </summary>
     [SerializeField]
     [HideInInspector]
-    private bool showarrig = false;
+    private bool showarrig = true;
     /// <summary>
     /// Whether to show the hidden camera rig used in stereo AR mode to prepare images for HMD output.
     /// <para>This is rarely needed, but can be useful for understanding how the ZED output works.</para>
@@ -812,7 +812,7 @@ public class ZEDManager : MonoBehaviour
         {
             //Creates a hidden camera rig that handles final output to the headset.
             GameObject o = CreateZEDRigDisplayer();
-            o.hideFlags = HideFlags.HideAndDontSave;
+            // o.hideFlags = HideFlags.HideAndDontSave;
             o.transform.parent = transform;
 
             //Force some initParameters that are required for a good AR experience.

@@ -17,17 +17,24 @@ void Init(uint3 id : SV_DISPATCHTHREADID)
 {
 	if (any(id.xyz > _PhysicsGridResolution)) return;
 
-	_PhysicsGridPositionTex[id.xyz] = float4(0,0,0,0);
+	_PhysicsGridPositionTex[id.xyz] = float4(0,0,0,-1);
 	_PhysicsGridVelocityTex[id.xyz] = float4(0,0,0,0);
 }
 
 #define MAX_HANDS 2
 
-float3 _GrabStartPositions[MAX_HANDS];
-float3 _GrabCurPositions[MAX_HANDS];
+// float4 _GrabStartPositions[MAX_HANDS];
+float4 _GrabCurPositions[MAX_HANDS];
+float4 _GrabDeltaPositions[MAX_HANDS];
 
 uint _CurGrabIndex;
 float _GrabDist;
+
+float _TargetSpringStrength;
+float _TargetSpringDamp;
+
+float _ClothSpringStrength;
+float _ClothSpringDamp;
 
 [numthreads(8,8,8)]
 void StartGrab(uint3 id : SV_DISPATCHTHREADID)
@@ -37,7 +44,7 @@ void StartGrab(uint3 id : SV_DISPATCHTHREADID)
 	float4 position = _PhysicsGridPositionTex[id.xyz];
 	float3 worldPos = position.xyz + ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
 
-	float3 grabPos = _GrabStartPositions[_CurGrabIndex];
+	float3 grabPos = _GrabCurPositions[_CurGrabIndex];
 	grabPos = frac(grabPos * _PhysicsGridSizeInv) * _PhysicsGridSize;
 	float3 dx = worldPos - grabPos;
 	if (dot(dx, dx) < _GrabDist * _GrabDist)
@@ -49,17 +56,36 @@ void StartGrab(uint3 id : SV_DISPATCHTHREADID)
 [numthreads(8,8,8)]
 void EndGrab(uint3 id : SV_DISPATCHTHREADID)
 {
+	if (any(id.xyz > _PhysicsGridResolution)) return;
 
-}
-
-[numthreads(8,8,8)]
-void UpdateVelocity(uint3 id : SV_DISPATCHTHREADID)
-{
-
+	float4 position = _PhysicsGridPositionTex[id.xyz];
+	if (abs((float)_CurGrabIndex - position.w) < 0.1)
+	{
+		_PhysicsGridPositionTex[id.xyz] = float4(position.xyz, -1);
+	}
 }
 
 [numthreads(8,8,8)]
 void UpdatePosition(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 position = _PhysicsGridPositionTex[id.xyz];
+	// float3 offset = ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
+	// float3 worldPos = position.xyz + ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
+	int grab = (int)position.w;
+	if (grab < 0)
+	{
+		// do normal advection
+	}
+	else
+	{
+		// update position according to hand
+		position.xyz += _GrabDeltaPositions[grab].xyz;
+	}
+	_PhysicsGridPositionTex[id.xyz] = position;
+}
+
+[numthreads(8,8,8)]
+void UpdateVelocity(uint3 id : SV_DISPATCHTHREADID)
 {
 
 }

@@ -14,10 +14,10 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/PointCloud/Grid.unity
     guid: ff68026d04cdbb9498e1715ffef5f484
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/PointCloud/Attraction.unity
     guid: b1602f4c5bbea084b83824b9f51bec65
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/PointCloud/BilllboardTest.unity
     guid: 11de21b351bf30148806c90323e862cb
   m_configObjects: {}

@@ -395,6 +395,9 @@ public class ZEDRenderingPlane : MonoBehaviour
 
         zedCamera = sl.ZEDCamera.GetInstance();
 		SetTextures(zedCamera,viewMode);
+        // BEGIN EDIT YUJIN
+        if (!display) return;
+        // END EDIT YUJIN
         canvas.SetActive(true);
 		canvas.transform.SetParent (cam.transform);
         ConfigureLightAndShadow(cam.actualRenderingPath);

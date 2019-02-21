@@ -50,6 +50,7 @@ public class PinchInteractionManager : MonoBehaviour
 
     public Action<InteractionController> OnControllerPinchBegin = (c) => {};
     public Action<InteractionController> OnControllerPinchEnd = (c) => {};
+    public Action<InteractionController> OnControllerPinchStay = (c) => {};
 
     #endregion
 
@@ -125,6 +126,10 @@ public class PinchInteractionManager : MonoBehaviour
                 else if (pinchOld <= _pinchThreshold && pinch > _pinchThreshold)
                 {
                     OnControllerPinchBegin(controller);
+                }
+                else
+                {
+                    OnControllerPinchStay(controller);
                 }
             }
         }

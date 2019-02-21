@@ -11,11 +11,11 @@ public class ZedPointCloudRenderer : MonoBehaviour
     [SerializeField]
     Shader _pointCloudShader;
 
-    [SerializeField, Range(1, 2)]
+    [SerializeField, Range(0.1f, 2)]
     float _resolutionScale = 1;
 
-    [SerializeField]
-    float _pointSize = 0.05f;
+    [SerializeField, Range(0, 0.1f)]
+    float _particleSize = 0.05f;
 
     [SerializeField]
     PhysicsGrid _grid;
@@ -33,10 +33,10 @@ public class ZedPointCloudRenderer : MonoBehaviour
     int _numberOfPoints;
     sl.ZEDCamera _zed;
 
-    int _pointSizeId;
     int _inverseViewMatrixId;
     int _viewMatrixId;
     int _cameraPositionId;
+	int _particleSizeId;
 
     Matrix4x4 _cameraMatrix;
 
@@ -51,17 +51,18 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     void Awake()
     {
-        _camera = GetComponent<Camera>();
+		_camera = GetComponent<Camera>();
 		_renderingPlane = GetComponent<ZEDRenderingPlane>();
-        _pointSizeId = Shader.PropertyToID("_PointSize");
         _inverseViewMatrixId = Shader.PropertyToID("_InverseViewMatrix");
         _viewMatrixId = Shader.PropertyToID("_ViewMatrix");
         _cameraPositionId = Shader.PropertyToID("_CameraPosition");
+		_particleSizeId = Shader.PropertyToID("_ParticleSize");
 
         if (_grid == null)
         {
             _grid = FindObjectOfType<PhysicsGrid>();
         }
+		_material = new Material(_pointCloudShader);
     }
 
     void OnEnable()
@@ -102,10 +103,10 @@ public class ZedPointCloudRenderer : MonoBehaviour
 			}
 		}
 
-        _material.SetFloat(_pointSizeId, _pointSize);
         _material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
         _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
         _material.SetVector(_cameraPositionId, _camera.transform.position);
+		_material.SetFloat(_particleSizeId, _particleSize);
 
 		_material.SetVector(_grid.idPhysicsGridSize, _grid.size);
 		_material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
@@ -146,7 +147,6 @@ public class ZedPointCloudRenderer : MonoBehaviour
         var pointHeight = Mathf.FloorToInt(_zed.ImageHeight * _resolutionScale);
         _numberOfPoints = pointWidth * pointHeight;
 
-        _material = new Material(_pointCloudShader);
         // _material.SetTexture("_XYZTex", _xyzTexture);
         _material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
 
@@ -179,14 +179,14 @@ public class ZedPointCloudRenderer : MonoBehaviour
         var scale = new Vector3((height * aspect), height, 1);
 
         _cameraMatrix = Matrix4x4.TRS(position, Quaternion.identity, scale);
-        Debug.Log("position " + position.ToString("0.0000"));
-        Debug.Log("scale " + scale.ToString("0.0000"));
+        // Debug.Log("position " + position.ToString("0.0000"));
+        // Debug.Log("scale " + scale.ToString("0.0000"));
         _material.SetMatrix("_Position", _cameraMatrix);
 
         var topLeft = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(-0.5f, 0.5f, 0));
-        Debug.Log(topLeft);
+        // Debug.Log(topLeft);
         var bottomRight = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(0.5f, -0.5f, 0));
-        Debug.Log(bottomRight);
+        // Debug.Log(bottomRight);
 
         _ready = true;
 

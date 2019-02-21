@@ -2,7 +2,7 @@
 {
 	Properties
 	{
-        _PointSize("Point Size", Float) = 0.05
+        _ParticleSize ("Particle Size", float) = 0.1
         [Toggle] _Distance("Apply Distance", Float) = 1
 		_HandMaskTex("Hand Mask Texture", 2D) = "gray" {}
 		_PhysicsGridPositionTex("Position Texture", 3D) = "white" {}
@@ -11,7 +11,8 @@
 	{
 		Tags { "RenderType"="Opaque" }
 		Cull Off
-		ZTest LEqual
+		ZWrite Off
+		ZTest On
 		LOD 100
 
 		Pass
@@ -19,6 +20,7 @@
 			CGPROGRAM
 			#pragma target 5.0
 			#pragma vertex vert
+			#pragma geometry geom
 			#pragma fragment frag
 			// make fog work
 			// #pragma multi_compile_fog
@@ -28,9 +30,9 @@
 			struct v2f
 			{
 				float4 position : SV_POSITION;
+                float2 uv : TEXCOORD0;
 				float4 color : COLOR;
-				float3 normal : NORMAL;
-                half psize : PSIZE;
+				// float3 normal : NORMAL;
 				// float depth : TEXCOORD0;
                 // UNITY_FOG_COORDS(0)
 			};
@@ -48,7 +50,7 @@
 
 			float4 _TexelSize;
 
-			float _PointSize;
+			float _ParticleSize;
 
 			float4 _HandLeftPosition;
 			float4 _HandRightPosition;
@@ -65,8 +67,6 @@
 			v2f vert (appdata_full v, uint vertex_id : SV_VertexID, uint instance_id : SV_InstanceID)
 			{
 				v2f o;
-
-				o.normal = v.normal;
 
 				float2 uv = float2(
 							clamp(fmod(instance_id, _TexelSize.z) * _TexelSize.x, _TexelSize.x, 1.0 - _TexelSize.x),
@@ -94,7 +94,8 @@
 
 				float3 gridIndex = worldPos * _PhysicsGridSizeInv.xyz;
 
-				float3 offset = _PhysicsGridPositionTex.SampleLevel(_TrilinearRepeatSampler, gridIndex, 0).rgb;
+				float4 posOffset = _PhysicsGridPositionTex.SampleLevel(_TrilinearRepeatSampler, gridIndex, 0);
+				worldPos += posOffset.xyz * (1.0 - mask);
 
 				// float3 center = float3(0, 0.75, 0);
 				// float3 distDir = worldPos - center;
@@ -103,8 +104,7 @@
 				// float offset = (sin(dist * 10.0 - _Time.y * 3.0)) * 0.1;
 				// offset *= pow(2.0, -dist);
 				// offset *= (1.0 - mask);
-
-				worldPos += offset;
+				// worldPos.y += offset;
 
 				// worldPos += normalize(distDir) * offset * 0.1;
 
@@ -116,7 +116,8 @@
 				o.position = dir;
 
 				float3 color = tex2Dlod(_ColorTex, float4(uv, 0.0, 0.0)).bgr;
-				color *= frac(gridIndex);
+				color = lerp(color, float3(1,0,0), saturate((posOffset.a + 1.0)) * (1.0 - mask));
+				// color *= frac(gridIndex);
 				// color *= offset;
 				// o.color = float4(color, 1.0);
 
@@ -125,15 +126,48 @@
 				// alpha = pow(saturate(1.0 - alpha * 1.7), 1.5);
 				// alpha *= saturate(0.8 / dist);
 				o.color = float4(color, 1.0);
+				o.uv = float2(0,0);
 
-				o.psize = _PointSize;
-
-				UNITY_TRANSFER_FOG(o,o.position);
+				// UNITY_TRANSFER_FOG(o,o.position);
 				return o;
 			}
 
+			#define SQRT_THREE 1.73205080757
+			#define SQRT_THREE_HALF 0.86602540378
+
+            [maxvertexcount(3)]
+            void geom (point v2f input[1], inout TriangleStream<v2f> outputStream) {
+                v2f newVertex;
+                newVertex.color = input[0].color;
+                float2 newxy;
+				float psize = _ParticleSize * input[0].position.w;
+				float2 aspect = float2(_ScreenParams.y * _ScreenParams.z - _ScreenParams.y, 1.0);
+
+                newxy = input[0].position.xy + float2 (-SQRT_THREE_HALF, -0.5) * psize * aspect;
+                newVertex.position = float4(newxy.x, newxy.y, input[0].position.z, input[0].position.w);
+                newVertex.uv = float2 (-SQRT_THREE, -1.0);
+                outputStream.Append(newVertex);
+
+                newxy = input[0].position.xy + float2 (0.0, 1.0) * psize * aspect;
+                newVertex.position = float4(newxy.x, newxy.y, input[0].position.z, input[0].position.w);
+                newVertex.uv = float2 (0.0, 2.0);
+                outputStream.Append(newVertex);
+
+                newxy = input[0].position.xy + float2 (SQRT_THREE_HALF, -0.5) * psize * aspect;
+                newVertex.position = float4(newxy.x, newxy.y, input[0].position.z, input[0].position.w);
+                newVertex.uv = float2 (SQRT_THREE, -1.0);
+                outputStream.Append(newVertex);
+
+                // newxy = input[0].position.xy + float2 (0.5, 0.5) * psize * aspect;
+                // newVertex.position = float4(newxy.x, newxy.y, input[0].position.z, input[0].position.w);
+                // newVertex.uv = float2 (1.0, 1.0);
+                // outputStream.Append(newVertex);
+            }
+
 			fixed4 frag (v2f i) : SV_Target
 			{
+				float2 off = i.uv;
+				clip(1 - dot(off, off));
 				// sample the texture
 				fixed4 col = fixed4(i.color);
 				// outDepth = i.depth;
