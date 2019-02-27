@@ -39,6 +39,15 @@ public class PhysicsGrid : MonoBehaviour
 	float _grabDist = 0.1f;
 
 	[SerializeField]
+	float _targetSpringStrength = 0.1f;
+
+	[SerializeField]
+	float _clothSpringStrength = 3f;
+
+	[SerializeField, Range(0, 10)]
+	float _damping = 0.1f;
+
+	[SerializeField]
     RenderTexture _positionTexture;
     public RenderTexture positionTexture
     {
@@ -82,6 +91,12 @@ public class PhysicsGrid : MonoBehaviour
 	int _idGrabDeltaPositions;
 	int _idCurGrabIndex;
 	int _idGrabDist;
+
+	int _idTargetSpringStrength;
+	int _idClothSpringStrength;
+	int _idDamping;
+
+	int _idTime;
 
     int _kernelInit;
 	int _kernelStartGrab;
@@ -133,6 +148,10 @@ public class PhysicsGrid : MonoBehaviour
 		_idGrabDeltaPositions = Shader.PropertyToID("_GrabDeltaPositions");
 		_idCurGrabIndex = Shader.PropertyToID("_CurGrabIndex");
 		_idGrabDist = Shader.PropertyToID("_GrabDist");
+		_idTargetSpringStrength = Shader.PropertyToID("_TargetSpringStrength");
+		_idClothSpringStrength = Shader.PropertyToID("_ClothSpringStrength");
+		_idDamping = Shader.PropertyToID("_Damping");
+		_idTime = Shader.PropertyToID("_Time");
 
         _kernelInit = _computeShader.FindKernel("Init");
 		_kernelStartGrab = _computeShader.FindKernel("StartGrab");
@@ -174,21 +193,38 @@ public class PhysicsGrid : MonoBehaviour
 		_computeShader.SetVector(_idPhysicsGridSizeInv, invSize);
         _computeShader.SetTexture(_kernelInit, _idPhysicsGridPositionTex, _positionTexture);
         _computeShader.SetTexture(_kernelInit, _idPhysicsGridVelocityTex, _velocityTexture);
-		_computeShader.SetFloat("_Time", Time.time);
 
         const int groupSizeDim = 8;
         _groupsX = (_resolution.x + groupSizeDim - 1) / groupSizeDim;
         _groupsY = (_resolution.y + groupSizeDim - 1) / groupSizeDim;
         _groupsZ = (_resolution.z + groupSizeDim - 1) / groupSizeDim;
         _computeShader.Dispatch(_kernelInit, _groupsX, _groupsY, _groupsZ);
+
+        _computeShader.SetTexture(_kernelStartGrab, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelStartGrab, _idPhysicsGridVelocityTex, _velocityTexture);
+
+        _computeShader.SetTexture(_kernelEndGrab, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelEndGrab, _idPhysicsGridVelocityTex, _velocityTexture);
+
+        _computeShader.SetTexture(_kernelUpdatePosition, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelUpdatePosition, _idPhysicsGridVelocityTex, _velocityTexture);
+
+        _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridPositionTex, _positionTexture);
+        _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridVelocityTex, _velocityTexture);
+
     }
 
     void Update()
     {
-        _computeShader.SetTexture(_kernelStartGrab, _idPhysicsGridPositionTex, _positionTexture);
-        _computeShader.SetTexture(_kernelStartGrab, _idPhysicsGridVelocityTex, _velocityTexture);
-
 		// _computeShader.SetVectorArray(_idGrabStartPositions, _grabStartPositions);
+		foreach (var controller in InteractionManager.instance.interactionControllers)
+		{
+			if (!PinchInteractionManager.instance.IsPinching(controller))
+			{
+				var index = controller.isRight ? 1 : 0;
+				_grabCurPositions[index] = controller.GetPinchPosition();
+			}
+		}
 		for (int i = 0; i < MAX_HANDS; i++)
 		{
 			_grabDeltaPositions[i] = _grabCurPositions[i] - _grabPrevPositions[i];
@@ -197,6 +233,14 @@ public class PhysicsGrid : MonoBehaviour
 		_computeShader.SetVectorArray(_idGrabCurPositions, _grabCurPositions);
 
 		_computeShader.SetFloat(_idGrabDist, _grabDist);
+
+		_computeShader.SetFloat(_idTargetSpringStrength, _targetSpringStrength);
+		_computeShader.SetFloat(_idClothSpringStrength, _clothSpringStrength);
+
+		var dt = Mathf.Clamp(Time.deltaTime, 1f / 200, 1f / 10);
+		var smoothDt = Mathf.Clamp(Time.smoothDeltaTime, 1f / 200, 1f / 10);
+		_computeShader.SetFloat(_idDamping, Mathf.Exp(-_damping * smoothDt));
+		_computeShader.SetVector(_idTime, new Vector4(dt, 1f / dt, smoothDt, 1f / smoothDt));
 
 		for (int i = _pinchBeginControllers.Count - 1; i >= 0; i--)
 		{
@@ -207,9 +251,6 @@ public class PhysicsGrid : MonoBehaviour
 			_pinchBeginControllers.RemoveAt(i);
 		}
 
-        _computeShader.SetTexture(_kernelEndGrab, _idPhysicsGridPositionTex, _positionTexture);
-        _computeShader.SetTexture(_kernelEndGrab, _idPhysicsGridVelocityTex, _velocityTexture);
-
 		for (int i = _pinchEndControllers.Count - 1; i >= 0; i--)
 		{
 			var controller = _pinchEndControllers[i];
@@ -219,13 +260,7 @@ public class PhysicsGrid : MonoBehaviour
 			_pinchEndControllers.RemoveAt(i);
 		}
 
-        _computeShader.SetTexture(_kernelUpdatePosition, _idPhysicsGridPositionTex, _positionTexture);
-        _computeShader.SetTexture(_kernelUpdatePosition, _idPhysicsGridVelocityTex, _velocityTexture);
-
 		_computeShader.Dispatch(_kernelUpdatePosition, _groupsX, _groupsY, _groupsZ);
-
-        _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridPositionTex, _positionTexture);
-        _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridVelocityTex, _velocityTexture);
 
 		_computeShader.Dispatch(_kernelUpdateVelocity, _groupsX, _groupsY, _groupsZ);
 

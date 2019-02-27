@@ -6,6 +6,9 @@
         [Toggle] _Distance("Apply Distance", Float) = 1
 		_HandMaskTex("Hand Mask Texture", 2D) = "gray" {}
 		_PhysicsGridPositionTex("Position Texture", 3D) = "white" {}
+
+		_GrabColor ("Grab Color", Color) = (1,1,0.3,1)
+		_GrabColorStrength("Grab Color Strength", Range(0, 1)) = 0.4
 	}
 	SubShader
 	{
@@ -54,6 +57,9 @@
 
 			float4 _HandLeftPosition;
 			float4 _HandRightPosition;
+
+			float4 _GrabColor;
+			float _GrabColorStrength;
 
 			sampler2D _HandMaskTex;
 
@@ -116,7 +122,7 @@
 				o.position = dir;
 
 				float3 color = tex2Dlod(_ColorTex, float4(uv, 0.0, 0.0)).bgr;
-				color = lerp(color, float3(1,0,0), saturate((posOffset.a + 1.0)) * (1.0 - mask));
+				// color = lerp(color, _GrabColor.rgb, saturate((posOffset.a + 1.0)) * (1.0 - mask) * _GrabColorStrength);
 				// color *= frac(gridIndex);
 				// color *= offset;
 				// o.color = float4(color, 1.0);

@@ -10,7 +10,7 @@ RWTexture3D<float4> _PhysicsGridVelocityTex;
 uint3 _PhysicsGridResolution;
 float3 _PhysicsGridSize;
 float3 _PhysicsGridSizeInv;
-float _Time;
+float4 _Time;
 
 [numthreads(8,8,8)]
 void Init(uint3 id : SV_DISPATCHTHREADID)
@@ -31,10 +31,9 @@ uint _CurGrabIndex;
 float _GrabDist;
 
 float _TargetSpringStrength;
-float _TargetSpringDamp;
+float _Damping;
 
 float _ClothSpringStrength;
-float _ClothSpringDamp;
 
 [numthreads(8,8,8)]
 void StartGrab(uint3 id : SV_DISPATCHTHREADID)
@@ -44,7 +43,7 @@ void StartGrab(uint3 id : SV_DISPATCHTHREADID)
 	float4 position = _PhysicsGridPositionTex[id.xyz];
 	float3 worldPos = position.xyz + ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
 
-	float3 grabPos = _GrabCurPositions[_CurGrabIndex];
+	float3 grabPos = _GrabCurPositions[_CurGrabIndex].xyz;
 	grabPos = frac(grabPos * _PhysicsGridSizeInv) * _PhysicsGridSize;
 	float3 dx = worldPos - grabPos;
 	if (dot(dx, dx) < _GrabDist * _GrabDist)
@@ -65,16 +64,24 @@ void EndGrab(uint3 id : SV_DISPATCHTHREADID)
 	}
 }
 
+static float dt = 1.0 / 60;
+static float inv_dt = 60;
+
 [numthreads(8,8,8)]
 void UpdatePosition(uint3 id : SV_DISPATCHTHREADID)
 {
+	if (any(id.xyz > _PhysicsGridResolution)) return;
+
 	float4 position = _PhysicsGridPositionTex[id.xyz];
+	float3 oldPosition = position.xyz;
 	// float3 offset = ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
 	// float3 worldPos = position.xyz + ((float3)id.xyz) * _PhysicsGridSize / ((float3)_PhysicsGridResolution);
 	int grab = (int)position.w;
 	if (grab < 0)
 	{
 		// do normal advection
+		float3 velocity = _PhysicsGridVelocityTex[id.xyz].xyz;
+		position.xyz += velocity * _Time.z;
 	}
 	else
 	{
@@ -82,10 +89,115 @@ void UpdatePosition(uint3 id : SV_DISPATCHTHREADID)
 		position.xyz += _GrabDeltaPositions[grab].xyz;
 	}
 	_PhysicsGridPositionTex[id.xyz] = position;
+	float3 velocity = (position.xyz - oldPosition) * _Time.w;
+	_PhysicsGridVelocityTex[id.xyz] = float4(velocity, 0);
 }
 
 [numthreads(8,8,8)]
 void UpdateVelocity(uint3 id : SV_DISPATCHTHREADID)
 {
+	if (any(id.xyz > _PhysicsGridResolution)) return;
 
+	float4 position = _PhysicsGridPositionTex[id.xyz];
+	float4 velocity = _PhysicsGridVelocityTex[id.xyz];
+
+	float3 force = float3(0,0,0);
+
+	uint3 cell = id.xyz;
+	// look at neighboring cells
+	uint3 neighborCell;
+	uint3 size = _PhysicsGridResolution;
+
+	uint3 maxCell = uint3(int3(cell) + int3(1,1,1)) % size;
+	uint3 minCell = uint3(int3(cell) - int3(1,1,1) + int3(size)) % size;
+
+	// sides
+	neighborCell = uint3(cell.x, cell.y, maxCell.z);
+	force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	neighborCell = uint3(cell.x, cell.y, minCell.z);
+	force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	neighborCell = uint3(cell.x, maxCell.y, cell.z);
+	force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	neighborCell = uint3(cell.x, minCell.y, cell.z);
+	force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	neighborCell = uint3(maxCell.x, cell.y, cell.z);
+	force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	neighborCell = uint3(minCell.x, cell.y, cell.z);
+	force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// edges
+	// neighborCell = uint3(cell.x, maxCell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(cell.x, maxCell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(cell.x, minCell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(cell.x, minCell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, cell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, cell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, cell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, cell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, maxCell.y, cell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, minCell.y, cell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, maxCell.y, cell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, minCell.y, cell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// corners
+	// neighborCell = uint3(maxCell.x, maxCell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, maxCell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, minCell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(maxCell.x, minCell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, maxCell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, maxCell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, minCell.y, maxCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	// neighborCell = uint3(minCell.x, minCell.y, minCell.z);
+	// force += _PhysicsGridPositionTex[neighborCell].xyz - position.xyz;
+
+	force *= _ClothSpringStrength;
+
+	force -= position.xyz * _TargetSpringStrength;
+
+	velocity.xyz += force * _Time.z;
+	velocity.xyz *= _Damping;
+
+	_PhysicsGridVelocityTex[id.xyz] = velocity;
 }
