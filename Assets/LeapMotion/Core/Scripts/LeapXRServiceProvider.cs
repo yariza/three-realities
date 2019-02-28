@@ -196,6 +196,11 @@ namespace Leap.Unity {
       }
     }
 
+    // BEGIN EDIT YUJIN
+    [SerializeField]
+    bool _useLocalTracking;
+    // END EDIT YUJIN
+
     [NonSerialized]
     public long imageTimeStamp = 0;
 
@@ -280,6 +285,12 @@ namespace Leap.Unity {
 
       // Use _tweenImageWarping
       var currCenterRotation = XRSupportUtil.GetXRNodeCenterEyeLocalRotation();
+      // BEGIN EDIT YUJIN
+      if (_useLocalTracking)
+      {
+        currCenterRotation = transform.localRotation;
+      }
+      // END EDIT YUJIN
 
       var imageReferenceRotation = _temporalWarpingMode != TemporalWarpingMode.Off
                                                         ? pastRotation
@@ -306,6 +317,12 @@ namespace Leap.Unity {
       // Get most recent tracked pose.
       Pose trackedPose = new Pose(XRSupportUtil.GetXRNodeCenterEyeLocalPosition(),
                                   XRSupportUtil.GetXRNodeCenterEyeLocalRotation());
+      // BEGIN EDIT YUJIN
+      if (_useLocalTracking)
+      {
+        trackedPose = new Pose(transform.localPosition, transform.localRotation);
+      }
+      // END EDIT YUJIN
 
       // If we don't know of any pose offset yet, account for it by finding the pose
       // delta from the "local" tracked pose to the actual camera pose.

@@ -289,7 +289,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
   _resolutionScale: 0.5
-  _particleSize: 0.025
+  _particleSize: 0.0084
+  _particleSizeBump: 0.167
   _grid: {fileID: 1955906200}
 --- !u!114 &1629322312
 MonoBehaviour:
@@ -321,7 +322,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
   _resolutionScale: 0.5
-  _particleSize: 0.025
+  _particleSize: 0.0084
+  _particleSizeBump: 0.167
   _grid: {fileID: 1955906200}
 --- !u!137 &1873496134 stripped
 SkinnedMeshRenderer:
@@ -359,7 +361,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _computeShader: {fileID: 7200000, guid: c4e73571c475a27408e25943db9779b0, type: 3}
-  _resolution: {x: 128, y: 128, z: 128}
+  _resolution: {x: 64, y: 64, z: 64}
   _size: {x: 2, y: 2, z: 2}
   _grabDist: 0.05
   _targetSpringStrength: 100

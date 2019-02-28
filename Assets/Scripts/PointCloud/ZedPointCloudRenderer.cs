@@ -17,6 +17,9 @@ public class ZedPointCloudRenderer : MonoBehaviour
     [SerializeField, Range(0, 0.1f)]
     float _particleSize = 0.05f;
 
+    [SerializeField, Range(0, 1f)]
+    float _particleSizeBump = 0.1f;
+
     [SerializeField]
     PhysicsGrid _grid;
 
@@ -37,6 +40,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
     int _viewMatrixId;
     int _cameraPositionId;
 	int _particleSizeId;
+    int _particleSizeBumpId;
 
     Matrix4x4 _cameraMatrix;
 
@@ -57,6 +61,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
         _viewMatrixId = Shader.PropertyToID("_ViewMatrix");
         _cameraPositionId = Shader.PropertyToID("_CameraPosition");
 		_particleSizeId = Shader.PropertyToID("_ParticleSize");
+        _particleSizeBumpId = Shader.PropertyToID("_ParticleSizeBump");
 
         if (_grid == null)
         {
@@ -107,6 +112,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
         _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
         _material.SetVector(_cameraPositionId, _camera.transform.position);
 		_material.SetFloat(_particleSizeId, _particleSize);
+        _material.SetFloat(_particleSizeBumpId, _particleSizeBump);
 
 		_material.SetVector(_grid.idPhysicsGridSize, _grid.size);
 		_material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);

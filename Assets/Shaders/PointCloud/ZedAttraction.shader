@@ -3,6 +3,7 @@
 	Properties
 	{
         _ParticleSize ("Particle Size", float) = 0.1
+		_ParticleSizeBump ("Particle Size Bump", float) = 0.3
         [Toggle] _Distance("Apply Distance", Float) = 1
 		_HandMaskTex("Hand Mask Texture", 2D) = "gray" {}
 		_PhysicsGridPositionTex("Position Texture", 3D) = "white" {}
@@ -14,7 +15,7 @@
 	{
 		Tags { "RenderType"="Opaque" }
 		Cull Off
-		ZWrite Off
+		ZWrite On
 		ZTest On
 		LOD 100
 
@@ -35,6 +36,7 @@
 				float4 position : SV_POSITION;
                 float2 uv : TEXCOORD0;
 				float4 color : COLOR;
+				float psize : TEXCOORD1;
 				// float3 normal : NORMAL;
 				// float depth : TEXCOORD0;
                 // UNITY_FOG_COORDS(0)
@@ -54,6 +56,7 @@
 			float4 _TexelSize;
 
 			float _ParticleSize;
+			float _ParticleSizeBump;
 
 			float4 _HandLeftPosition;
 			float4 _HandRightPosition;
@@ -100,8 +103,9 @@
 
 				float3 gridIndex = worldPos * _PhysicsGridSizeInv.xyz;
 
-				float4 posOffset = _PhysicsGridPositionTex.SampleLevel(_TrilinearRepeatSampler, gridIndex, 0);
-				worldPos += posOffset.xyz * (1.0 - mask);
+				float3 posOffset = _PhysicsGridPositionTex.SampleLevel(_TrilinearRepeatSampler, gridIndex, 0).xyz;
+				posOffset *= (1.0 - mask);
+				worldPos += posOffset;
 
 				// float3 center = float3(0, 0.75, 0);
 				// float3 distDir = worldPos - center;
@@ -133,6 +137,7 @@
 				// alpha *= saturate(0.8 / dist);
 				o.color = float4(color, 1.0);
 				o.uv = float2(0,0);
+				o.psize = _ParticleSize + _ParticleSizeBump * length(posOffset);
 
 				// UNITY_TRANSFER_FOG(o,o.position);
 				return o;
@@ -146,8 +151,10 @@
                 v2f newVertex;
                 newVertex.color = input[0].color;
                 float2 newxy;
-				float psize = _ParticleSize * input[0].position.w;
+				float psize = input[0].psize * input[0].position.w;
 				float2 aspect = float2(_ScreenParams.y * _ScreenParams.z - _ScreenParams.y, 1.0);
+
+				newVertex.psize = 0;
 
                 newxy = input[0].position.xy + float2 (-SQRT_THREE_HALF, -0.5) * psize * aspect;
                 newVertex.position = float4(newxy.x, newxy.y, input[0].position.z, input[0].position.w);
