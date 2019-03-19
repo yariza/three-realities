@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using Utils;
 
 [CustomPropertyDrawer(typeof(MinMaxAttribute))]
 public class MinMaxDrawer : PropertyDrawer
@@ -71,7 +72,7 @@ public class MinMaxDrawer : PropertyDrawer
 
         // by default just return the standard line height
         float size = EditorGUIUtility.singleLineHeight;
-        
+
         // if we have a special mode, add two extra lines!
         if (minMax.ShowEditRange || minMax.ShowDebugValues)
         {

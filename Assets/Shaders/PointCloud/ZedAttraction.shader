@@ -104,7 +104,7 @@
 				float3 gridIndex = worldPos * _PhysicsGridSizeInv.xyz;
 
 				float3 posOffset = _PhysicsGridPositionTex.SampleLevel(_TrilinearRepeatSampler, gridIndex, 0).xyz;
-				posOffset *= (1.0 - mask);
+				posOffset *= step(mask, 0.5);
 				worldPos += posOffset;
 
 				// float3 center = float3(0, 0.75, 0);

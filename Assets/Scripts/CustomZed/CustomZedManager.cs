@@ -660,7 +660,7 @@ public class CustomZedManager : MonoBehaviour
             if (zedRigRoot == null)
             {
                 zedRigRoot = transform.GetChild(0);
-                UnityEngine.XR.XRDevice.DisableAutoXRCameraTracking(zedRigRoot.GetComponentInChildren<Camera>(true), true);
+                // UnityEngine.XR.XRDevice.DisableAutoXRCameraTracking(zedRigRoot.GetComponentInChildren<Camera>(true), true);
             }
         }
         // else //Not all conditions for a stereo rig were met. Set culling masks accordingly.

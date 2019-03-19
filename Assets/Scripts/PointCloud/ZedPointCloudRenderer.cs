@@ -77,7 +77,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         if (_commandBuffer != null)
         {
-            _camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+            _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
         }
     }
 
@@ -88,7 +88,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         if (_commandBuffer != null)
         {
-            _camera.RemoveCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+            _camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
         }
     }
 
@@ -200,7 +200,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
 
-        _camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, _commandBuffer);
+        _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
     }
 
     void OnZedDisconnected()

@@ -56,6 +56,9 @@ namespace Leap.Unity {
     [SerializeField]
     private float _palmRadius = 0.015f;
 
+    [SerializeField]
+    bool _sphereColors = true;
+
     private Material _sphereMat;
     private Hand _hand;
     private Vector3[] _spherePositions;
@@ -98,6 +101,8 @@ namespace Leap.Unity {
 
     public override void BeginHand() {
       base.BeginHand();
+
+      if (!_sphereColors) return;
 
       if (_hand.IsLeft) {
         _sphereMat.color = _leftColorList[_leftColorIndex];
@@ -202,11 +207,11 @@ namespace Leap.Unity {
 
     private void drawSphere(Vector3 position, float radius) {
       //multiply radius by 2 because the default unity sphere has a radius of 0.5 meters at scale 1.
-      Graphics.DrawMesh(_sphereMesh, 
-                        Matrix4x4.TRS(position, 
-                                      Quaternion.identity, 
-                                      Vector3.one * radius * 2.0f * transform.lossyScale.x), 
-                        _sphereMat, 0, 
+      Graphics.DrawMesh(_sphereMesh,
+                        Matrix4x4.TRS(position,
+                                      Quaternion.identity,
+                                      Vector3.one * radius * 2.0f * transform.lossyScale.x),
+                        _sphereMat, 0,
                         null, 0, null, _castShadows);
     }
 
@@ -214,11 +219,11 @@ namespace Leap.Unity {
       float length = (a - b).magnitude;
 
       Graphics.DrawMesh(getCylinderMesh(length),
-                        Matrix4x4.TRS(a, 
-                                      Quaternion.LookRotation(b - a), 
+                        Matrix4x4.TRS(a,
+                                      Quaternion.LookRotation(b - a),
                                       new Vector3(transform.lossyScale.x, transform.lossyScale.x, 1)),
                         _material,
-                        gameObject.layer, 
+                        gameObject.layer,
                         null, 0, null, _castShadows);
     }
 

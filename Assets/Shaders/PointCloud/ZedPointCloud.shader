@@ -10,7 +10,7 @@
 		Tags { "RenderType"="Opaque" }
 		Cull Off
 		ZTest LEqual
-		Blend SrcAlpha OneMinusSrcAlpha
+		// Blend SrcAlpha OneMinusSrcAlpha
 		LOD 100
 
 		Pass
@@ -20,7 +20,7 @@
 			#pragma fragment frag
 			// make fog work
 			#pragma multi_compile_fog
-			
+
 			#include "UnityCG.cginc"
 
 			struct v2f
@@ -43,7 +43,7 @@
 			float4x4 _InverseViewMatrix;
 			float4x4 _ViewMatrix;
 			float3 _CameraPosition;
-			
+
 			float4 _TexelSize;
 
 			float _PointSize;
@@ -131,7 +131,7 @@
 				UNITY_TRANSFER_FOG(o,o.position);
 				return o;
 			}
-			
+
 			fixed4 frag (v2f i) : SV_Target
 			{
 				// sample the texture

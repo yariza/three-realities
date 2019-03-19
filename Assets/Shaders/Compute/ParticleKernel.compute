@@ -1,0 +1,53 @@
+﻿#pragma kernel InitParticle
+#pragma kernel UpdateParticle
+
+Texture2D<float4> _XYZRGBATex;
+
+uint _MaxParticles;
+float2 _LifeParams;
+uint2 _Resolution;
+float4 _Bounds;
+float _Speed;
+float4 _Config;
+
+// PRNG function
+float nrand(uint3 id, float salt)
+{
+    float2 uv = float2((float)id.x / _MaxParticles, (float)id.x % 256.0);
+    uv += float2(salt, _Config.y);
+    return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+float random (float2 st) {
+    return frac(sin(dot(st.xy,
+                         float2(-0.500,-0.990)))*
+        43758.5453123);
+}
+
+float4 new_particle_position(uint3 id)
+{
+    float t = _Config.w;
+
+    float2 pos = float2(nrand(id, t + 1), nrand(id, t + 2));
+    pos -= (float2)0.5;
+    pos *= _Bounds.xy;
+
+    // Throttling: discards particle emission by adding offset.
+    float4 offs = float4(1e8, 1e8, 1e8, -1) * ((float)id.x > _Config.x * (float)_MaxParticles);
+
+    return float4(pos.x, pos.y, 0, 0.5) + offs;
+}
+
+[numthreads(512,1,1)]
+void InitParticle (uint3 id : SV_DISPATCHTHREADID)
+{
+    if (id.x >= _MaxParticles) return;
+
+
+}
+
+[numthreads(512,1,1)]
+void UpdateParticle(uint3 id : SV_DISPATCHTHREADID)
+{
+
+}

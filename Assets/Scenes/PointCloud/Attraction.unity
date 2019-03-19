@@ -233,9 +233,33 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 381533990, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: m_OcclusionCulling
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 381533990, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: near clip plane
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 381533990, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: far clip plane
+      value: 100
+      objectReference: {fileID: 0}
     - target: {fileID: 73205511, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 73205511, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: m_OcclusionCulling
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 73205511, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: near clip plane
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 73205511, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: far clip plane
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 73205510, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
       propertyPath: display
@@ -243,6 +267,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 381533989, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
       propertyPath: display
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 668493324, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: _castShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 668493324, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: _sphereColors
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 763232296, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: _castShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 763232296, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: _sphereColors
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -363,7 +403,7 @@ MonoBehaviour:
   _computeShader: {fileID: 7200000, guid: c4e73571c475a27408e25943db9779b0, type: 3}
   _resolution: {x: 64, y: 64, z: 64}
   _size: {x: 2, y: 2, z: 2}
-  _grabDist: 0.05
+  _grabDist: 0.08
   _targetSpringStrength: 100
   _clothSpringStrength: 40
   _damping: 2
