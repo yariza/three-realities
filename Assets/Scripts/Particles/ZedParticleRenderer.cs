@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Leap.Unity;
 
 public class ZedParticleRenderer : MonoBehaviour
 {
@@ -63,12 +64,20 @@ public class ZedParticleRenderer : MonoBehaviour
     [SerializeField]
     int _batchSize = 2000;
 
+    [SerializeField]
+    HandMaskRenderer _handMask = null;
+
+    [SerializeField]
+    bool _useHandMask = false;
+
+    [SerializeField, Range(0, 0.5f)]
+    float _handRadius = 0.2f;
+
     #endregion
 
     #region Fields
 
     Vector2Int _particleResolution;
-    // Kvant.Spray.BulkMesh _bulkMesh;
 
     CustomZedManager _manager;
 
@@ -84,7 +93,8 @@ public class ZedParticleRenderer : MonoBehaviour
     MaterialPropertyBlock _propertyBlock;
     Camera _camera;
     CommandBuffer _commandBuffer;
-
+    const int HANDS_COUNT = 2;
+    Vector4[] _handCenters = new Vector4[HANDS_COUNT];
 
     int _idPositionBuffer;
     int _idColorBuffer;
@@ -141,6 +151,11 @@ public class ZedParticleRenderer : MonoBehaviour
 
         _camera = Camera.main;
         _commandBuffer = new CommandBuffer();
+
+        if (_handMask == null)
+        {
+            _handMask = FindObjectOfType<HandMaskRenderer>();
+        }
     }
 
     private void OnEnable()
@@ -196,7 +211,6 @@ public class ZedParticleRenderer : MonoBehaviour
         for (int i = 0; i < numParticles; i += _batchSize)
         {
             _propertyBlock.SetInt("_InstanceOffset", i);
-            // Graphics.DrawProcedural(MeshTopology.Triangles, 3, Mathf.Min(_batchSize, numParticles - i));
             _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0,
                 MeshTopology.Triangles, 3, Mathf.Min(_batchSize, numParticles - i), _propertyBlock);
         }
@@ -204,19 +218,6 @@ public class ZedParticleRenderer : MonoBehaviour
 
     private void OnRenderObject()
     {
-        // _material.SetPass(0);
-        // _material.SetTexture(_idPositionBuffer, _positionBuffer2);
-        // _material.SetTexture(_idColorBuffer, _colorBuffer2);
-        // _material.SetFloat(_idScaleMin, _scale);
-        // _material.SetFloat(_idScaleMax, _scale);
-        // _material.SetFloat(_idRandomSeed, _randomSeed);
-
-        // var numParticles = _particleResolution.x * _particleResolution.y;
-        // for (int i = 0; i < numParticles; i += _batchSize)
-        // {
-        //     _material.SetInt("_InstanceOffset", i);
-        //     Graphics.DrawProcedural(MeshTopology.Triangles, 3, Mathf.Min(_batchSize, numParticles - i));
-        // }
     }
 
     #endregion
@@ -269,6 +270,25 @@ public class ZedParticleRenderer : MonoBehaviour
         m.SetVector(_idLifeParams, new Vector2(invLifeMin, invLifeMax));
 
         m.SetVector(_idConfig, new Vector4(_throttle, _randomSeed, deltaTime, Time.time));
+
+        if (_useHandMask)
+        {
+            m.EnableKeyword("USE_HAND_POSITION");
+            var left = Hands.Left;
+            var leftPos = left != null ? left.PalmPosition.ToVector3() : (Vector3.one * 1e8f);
+            _handCenters[0] = new Vector4(leftPos.x, leftPos.y, leftPos.z, left != null ? 1f : 0f);
+            var right = Hands.Right;
+            var rightPos = right != null ? right.PalmPosition.ToVector3() : (Vector3.one * 1e8f);
+            _handCenters[1] = new Vector4(rightPos.x, rightPos.y, rightPos.z, right != null ? 1f : 0f);
+            m.SetVectorArray("_HandCenters", _handCenters);
+            m.SetTexture("_HandTex", _handMask.texture);
+            m.SetFloat("_HandRadius", _handRadius);
+            m.SetMatrix("_CameraVPMat", _camera.worldToCameraMatrix * _camera.projectionMatrix);
+        }
+        else
+        {
+            m.DisableKeyword("USE_HAND_POSITION");
+        }
     }
 
     Material CreateMaterial(Shader shader)

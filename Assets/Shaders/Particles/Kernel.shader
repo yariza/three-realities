@@ -21,6 +21,15 @@
     float2 _LifeParams;
     float4 _Config;
 
+#if USE_HAND_POSITION
+    #define HANDS_COUNT 2
+    float4 _HandCenters[HANDS_COUNT];
+
+    sampler2D _HandTex;
+    float _HandRadius;
+    // float4x4 _CameraVPMat;
+#endif
+
     // PRNG function
     float nrand(float2 uv, float salt)
     {
@@ -46,18 +55,25 @@
         float4 XYZPos = float4(tex2Dlod(_XYZTex, float4(uv, 0.0, 0.0)).rgb ,1.0f);
         float3 p = mul(_CameraViewMat, XYZPos).xyz;
 
-        float4 pos = float4(p, 0.5);
-        if (frac(nrand(uv, 13) + _Time.y) > _Config.x)
-        {
-            float nan = 0.0 / 0.0;
-            pos = float4(nan, nan, nan, -0.5);
-        }
+        bool throttle = (frac(nrand(uv, 13) + _Time.y) > _Config.x);
+
+    #if USE_HAND_POSITION
+        // float4 screenCoord = mul(_CameraVPMat, float4(p, 1.0));
+        // screenCoord = ComputeScreenPos(screenCoord);
+        // screenCoord.xy /= screenCoord.w;
+        bool clipHand = tex2Dlod(_HandTex, float4(uv.xy, 0.0, 0.0)).r > 0.5;
+        float3 leftHandPos = p - _HandCenters[0];
+        float3 rightHandPos = p - _HandCenters[1];
+        float sqDist = _HandRadius * _HandRadius;
+        bool handRange = (dot(leftHandPos, leftHandPos) > sqDist) && (dot(rightHandPos, rightHandPos) > sqDist);
+        // throttle = throttle || clipHand || handRange;
+        throttle = throttle || clipHand || handRange;
+    #endif
 
         // Throttling: discards particle emission by adding offset.
-        // float4 offs = float4(1e8, 1e8, 1e8, -1) * (frac(nrand(uv, 13) + _Time.y) > _Config.x);
+        float4 offs = float4(1e8, 1e8, 1e8, -1) * throttle;
 
-        // return float4(p, 0.5) + offs;
-        return pos;
+        return float4(p, 0.5) + offs;
     }
 
     float4 new_particle_color(float2 uv)
@@ -81,7 +97,8 @@
     // pass 1
     float4 frag_init_color(v2f_img i) : SV_Target
     {
-        return new_particle_color(i.uv);
+        // return new_particle_color(i.uv);
+        return float4(0,0,0,1.0);
     }
 
     // pass 2
@@ -145,6 +162,7 @@
             #pragma target 3.0
             #pragma vertex vert_img
             #pragma fragment frag_update_position
+            #pragma multi_compile __ USE_HAND_POSITION
             ENDCG
         }
         Pass
@@ -153,6 +171,7 @@
             #pragma target 3.0
             #pragma vertex vert_img
             #pragma fragment frag_update_color
+            #pragma multi_compile __ USE_HAND_POSITION
             ENDCG
         }
     }
