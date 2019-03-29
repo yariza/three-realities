@@ -2689,13 +2689,13 @@ MonoBehaviour:
   _speed: 1
   _scale: 1
   _throttle: 0.038
-  _life: 20
-  _lifeRandomness: 0.032
+  _life: 30
+  _lifeRandomness: 0.859
   _randomSeed: 12.34586
   _batchSize: 12800
   _handMask: {fileID: 0}
   _useHandMask: 1
-  _handRadius: 0.3
+  _handRadius: 0.4
 --- !u!4 &1589359254
 Transform:
   m_ObjectHideFlags: 0
@@ -3441,6 +3441,10 @@ MonoBehaviour:
   - {fileID: 1904805776789893348}
   _handMaskMaterial: {fileID: 2100000, guid: 1a330d926b3ddd54ba43a0c7249994ff, type: 2}
   _useZedView: 1
+  _zedOffsetVector: {x: 0.0315, y: 0, z: 0.1}
+  _velocityHandExtrudeScale: 0.07
+  _baseExtrude: 0.03
+  _texture: {fileID: 0}
 --- !u!4 &2072176589
 Transform:
   m_ObjectHideFlags: 0

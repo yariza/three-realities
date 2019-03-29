@@ -15,6 +15,15 @@ public class HandMaskRenderer : MonoBehaviour
     [SerializeField]
     bool _useZedView;
 
+    [SerializeField]
+    Vector3 _zedOffsetVector;
+
+    [SerializeField, Range(0, 1)]
+    float _velocityHandExtrudeScale = 0f;
+    [SerializeField, Range(0, 0.1f)]
+    float _baseExtrude = 0.03f;
+
+    [SerializeField, ReadOnly("texture")]
     RenderTexture _texture;
     public RenderTexture texture
     {
@@ -25,6 +34,7 @@ public class HandMaskRenderer : MonoBehaviour
     CommandBuffer _commandBuffer;
     List<RiggedHand> _riggedHands = new List<RiggedHand>();
     CustomZedManager _manager;
+    List<Vector3> _prevPalmPositions = new List<Vector3>();
 
     void Awake()
     {
@@ -48,9 +58,10 @@ public class HandMaskRenderer : MonoBehaviour
         for (int i = 0; i < _handMaskRenderers.Count; i++)
         {
             _riggedHands.Add(_handMaskRenderers[i].gameObject.GetComponentInParent<RiggedHand>());
+            _prevPalmPositions.Add(Vector3.zero);
         }
         _commandBuffer = new CommandBuffer();
-
+        _handMaskMaterial = new Material(_handMaskMaterial);
     }
 
     void OnEnable()
@@ -71,6 +82,7 @@ public class HandMaskRenderer : MonoBehaviour
         if (_useZedView)
         {
             _manager = CustomZedManager.Instance;
+            CustomZedManager.OnZEDReady += OnZedReady;
         }
     }
 
@@ -86,25 +98,34 @@ public class HandMaskRenderer : MonoBehaviour
         return projectionMatrix;
     }
 
+    Matrix4x4 _zedOffset;
+    Matrix4x4 _zedProjection;
+
+    void OnZedReady()
+    {
+        _zedProjection = GetZedProjection();
+    }
+
     void Update()
     {
         _commandBuffer.Clear();
         if (_useZedView)
         {
             if (!_manager.IsZEDReady) return;
-            var pos = _manager.HMDSyncPosition;
-            var rot = _manager.HMDSyncRotation;
-            if (rot.x == 0 && rot.y == 0 && rot.z == 0 && rot.w == 0)
-            {
-                return;
-            }
-            var hmdToZed = _manager.arRig.HmdToZEDCalibration;
-            var cameraMat = Matrix4x4.TRS(pos, rot, Vector3.one) * Matrix4x4.TRS(hmdToZed.translation, hmdToZed.rotation, Vector3.one);
+            // var pos = _manager.HMDSyncPosition;
+            // var rot = _manager.HMDSyncRotation;
+            // if (rot.x == 0 && rot.y == 0 && rot.z == 0 && rot.w == 0)
+            // {
+            //     return;
+            // }
+
+            // var hmdToZedMat = Matrix4x4.Translate(-hmdToZed.translation + _manager.zedCamera.GetCalibrationParameters);
+            // Debug.Log(hmdToZed.translation);
             var projection = GetZedProjection();
-            // _commandBuffer.SetViewProjectionMatrices(cameraMat.inverse, projection);
-            _commandBuffer.SetProjectionMatrix(projection);
-            Debug.Log(cameraMat.inverse);
-            Debug.Log(projection);
+            _commandBuffer.SetViewProjectionMatrices(Matrix4x4.Translate(_zedOffsetVector) * _camera.worldToCameraMatrix, _zedProjection);
+            // _commandBuffer.SetProjectionMatrix(projection);
+            // Debug.Log(cameraMat.inverse);
+            // Debug.Log(projection);
         }
         _commandBuffer.SetRenderTarget(new RenderTargetIdentifier(_texture));
         _commandBuffer.ClearRenderTarget(false, true, Color.black);
@@ -112,6 +133,12 @@ public class HandMaskRenderer : MonoBehaviour
         {
             var renderer = _handMaskRenderers[i];
             if (!_riggedHands[i].IsTracked) continue;
+            var hand = _riggedHands[i];
+            var handPos = hand.GetPalmPosition();
+            var speed = ((handPos - _prevPalmPositions[i]) / Time.deltaTime).magnitude;
+            var extrude = _baseExtrude + speed * _velocityHandExtrudeScale;
+            _prevPalmPositions[i] = handPos;
+            _handMaskMaterial.SetFloat("_Extrude", extrude);
             _commandBuffer.DrawRenderer(renderer, _handMaskMaterial);
         }
         _commandBuffer.SetRenderTarget(null as RenderTexture);

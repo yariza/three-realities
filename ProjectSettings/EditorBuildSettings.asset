@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Particles/Particles.unity
     guid: 15afb07c5b72e9342b8a310c5dc2167f
+  - enabled: 0
+    path: Assets/Scenes/Particles/HandParticles.unity
+    guid: 092fbb5fa2a031a43b5cfca72fbf3eb6
   m_configObjects: {}

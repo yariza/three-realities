@@ -46,10 +46,15 @@
     float4 new_particle_position(float2 uv)
     {
         float t = _Config.w;
-        uv += float2(
+    #if USE_HAND_POSITION
+        // uv += float2(
+        //     nrand(float3(uv, _Time.x), 11),
+        //     nrand(float3(uv, _Time.x), 12)
+        // ) * _ColorBuffer_TexelSize.xy;
+        uv = float2(
             nrand(float3(uv, _Time.x), 11),
             nrand(float3(uv, _Time.x), 12)
-        ) * _ColorBuffer_TexelSize.xy;
+        );
 
         // Random position
         float4 XYZPos = float4(tex2Dlod(_XYZTex, float4(uv, 0.0, 0.0)).rgb ,1.0f);
@@ -57,17 +62,31 @@
 
         bool throttle = (frac(nrand(uv, 13) + _Time.y) > _Config.x);
 
-    #if USE_HAND_POSITION
         // float4 screenCoord = mul(_CameraVPMat, float4(p, 1.0));
         // screenCoord = ComputeScreenPos(screenCoord);
         // screenCoord.xy /= screenCoord.w;
-        bool clipHand = tex2Dlod(_HandTex, float4(uv.xy, 0.0, 0.0)).r > 0.5;
+        bool clipHand = tex2Dlod(_HandTex, float4(float2(uv.x, 1.0 - uv.y), 0.0, 0.0)).r > 0.5;
         float3 leftHandPos = p - _HandCenters[0];
         float3 rightHandPos = p - _HandCenters[1];
         float sqDist = _HandRadius * _HandRadius;
         bool handRange = (dot(leftHandPos, leftHandPos) > sqDist) && (dot(rightHandPos, rightHandPos) > sqDist);
-        // throttle = throttle || clipHand || handRange;
         throttle = throttle || clipHand || handRange;
+        // throttle = !clipHand;
+    #else
+        uv = float2(
+            nrand(float3(uv, _Time.x), 11),
+            nrand(float3(uv, _Time.x), 12)
+        );
+        // uv += float2(
+        //     nrand(float3(uv, _Time.x), 11),
+        //     nrand(float3(uv, _Time.x), 12)
+        // ) * _ColorBuffer_TexelSize.xy;
+
+        // Random position
+        float4 XYZPos = float4(tex2Dlod(_XYZTex, float4(uv, 0.0, 0.0)).rgb ,1.0f);
+        float3 p = mul(_CameraViewMat, XYZPos).xyz;
+
+        bool throttle = (frac(nrand(uv, 13) + _Time.y) > _Config.x);
     #endif
 
         // Throttling: discards particle emission by adding offset.
@@ -78,10 +97,14 @@
 
     float4 new_particle_color(float2 uv)
     {
-        uv += float2(
+        // uv += float2(
+        //     nrand(float3(uv, _Time.x), 11),
+        //     nrand(float3(uv, _Time.x), 12)
+        // ) * _ColorBuffer_TexelSize.xy;
+        uv = float2(
             nrand(float3(uv, _Time.x), 11),
             nrand(float3(uv, _Time.x), 12)
-        ) * _ColorBuffer_TexelSize.xy;
+        );
 
         float4 color = float4(tex2Dlod(_ColorTex, float4(uv, 0.0, 0.0)).bgr, 1.0f);
         return color;

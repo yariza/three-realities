@@ -1253,7 +1253,7 @@ MonoBehaviour:
     IsLeftToBeSpawned: 0
     RightModel: {fileID: 504543587}
     IsRightToBeSpawned: 0
-    IsEnabled: 1
+    IsEnabled: 0
     CanDuplicate: 0
   - GroupName: Image Hands
     _handModelManager: {fileID: 0}
@@ -2690,9 +2690,12 @@ MonoBehaviour:
   _scale: 1
   _throttle: 0.038
   _life: 20
-  _lifeRandomness: 0.032
+  _lifeRandomness: 0.704
   _randomSeed: 12.34586
   _batchSize: 12800
+  _handMask: {fileID: 0}
+  _useHandMask: 0
+  _handRadius: 0.2
 --- !u!4 &1589359254
 Transform:
   m_ObjectHideFlags: 0
