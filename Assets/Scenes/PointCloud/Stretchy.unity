@@ -118,6 +118,50 @@ SkinnedMeshRenderer:
     type: 3}
   m_PrefabInstance: {fileID: 1629322307}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1297656570 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 22, guid: 130fbc025286cb44dbe8f09b783bc18a,
+    type: 3}
+  m_PrefabInstance: {fileID: 1629322307}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1297656572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297656570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b24985d4ab48e4145940bb22c5704d44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
+  _resolutionScale: 0.5
+  _particleSize: 0.01
+  _particleSizeBump: 0.289
+  _grid: {fileID: 1955906200}
+--- !u!114 &1297656575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297656570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b91fbc67da8f9344a5e0e1d67aa5318, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _handMaskRenderers:
+  - {fileID: 1873496134}
+  - {fileID: 13827183}
+  _handMaskMaterial: {fileID: 2100000, guid: 844630d085c8ebd4e9135eade6d6d021, type: 2}
+  _useZedView: 0
+  _zedOffsetVector: {x: 0, y: 0, z: 0}
+  _velocityHandExtrudeScale: 0
+  _baseExtrude: 0.013
+  _texture: {fileID: 0}
 --- !u!1 &1352608159
 GameObject:
   m_ObjectHideFlags: 0
@@ -162,6 +206,50 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1543884242 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 40, guid: 130fbc025286cb44dbe8f09b783bc18a,
+    type: 3}
+  m_PrefabInstance: {fileID: 1629322307}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1543884244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1543884242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b24985d4ab48e4145940bb22c5704d44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
+  _resolutionScale: 0.5
+  _particleSize: 0.01
+  _particleSizeBump: 0.289
+  _grid: {fileID: 1955906200}
+--- !u!114 &1543884247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1543884242}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b91fbc67da8f9344a5e0e1d67aa5318, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _handMaskRenderers:
+  - {fileID: 1873496134}
+  - {fileID: 13827183}
+  _handMaskMaterial: {fileID: 2100000, guid: 844630d085c8ebd4e9135eade6d6d021, type: 2}
+  _useZedView: 0
+  _zedOffsetVector: {x: 0, y: 0, z: 0}
+  _velocityHandExtrudeScale: 0
+  _baseExtrude: 0.013
+  _texture: {fileID: 0}
 --- !u!1001 &1629322307
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -169,6 +257,22 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 316, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: _sphereColors
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 317, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: _sphereColors
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 304, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: display
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 314, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
+      propertyPath: display
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1442008768, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
       propertyPath: m_Name
       value: ZedLeapRig
@@ -287,84 +391,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 130fbc025286cb44dbe8f09b783bc18a, type: 3}
---- !u!1 &1629322308 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 73205507, guid: 130fbc025286cb44dbe8f09b783bc18a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1629322307}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1629322309 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 381533985, guid: 130fbc025286cb44dbe8f09b783bc18a,
-    type: 3}
-  m_PrefabInstance: {fileID: 1629322307}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1629322310
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629322308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b91fbc67da8f9344a5e0e1d67aa5318, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _handMaskRenderers:
-  - {fileID: 1873496134}
-  - {fileID: 13827183}
-  _handMaskMaterial: {fileID: 2100000, guid: 844630d085c8ebd4e9135eade6d6d021, type: 2}
---- !u!114 &1629322311
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629322308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b24985d4ab48e4145940bb22c5704d44, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
-  _resolutionScale: 0.5
-  _particleSize: 0.0084
-  _particleSizeBump: 0.167
-  _grid: {fileID: 1955906200}
---- !u!114 &1629322312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629322309}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b91fbc67da8f9344a5e0e1d67aa5318, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _handMaskRenderers:
-  - {fileID: 1873496134}
-  - {fileID: 13827183}
-  _handMaskMaterial: {fileID: 2100000, guid: 844630d085c8ebd4e9135eade6d6d021, type: 2}
---- !u!114 &1629322313
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629322309}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b24985d4ab48e4145940bb22c5704d44, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
-  _resolutionScale: 0.5
-  _particleSize: 0.0084
-  _particleSizeBump: 0.167
-  _grid: {fileID: 1955906200}
 --- !u!137 &1873496134 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 1983872176409944935, guid: 130fbc025286cb44dbe8f09b783bc18a,

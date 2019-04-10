@@ -1,4 +1,4 @@
-﻿Shader "Unlit/ZedPlane"
+﻿Shader "Unlit/ZedPlane/White"
 {
     Properties
     {

@@ -210,8 +210,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b81853d0ea3c7b5428b1b38889d3f09e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _material: {fileID: 2100000, guid: 218eabb9dabe5514c90ac611f956a286, type: 2}
+  _material: {fileID: 2100000, guid: 0c48b7e5efa757048872df73720938e2, type: 2}
   _quadMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  _offset: {x: 0.0315, y: 0, z: 0.0575}
+  _pos: {x: 0, y: 0, z: 1}
+  _scale: {x: 1, y: 1, z: 1}
 --- !u!4 &1704891642
 Transform:
   m_ObjectHideFlags: 0

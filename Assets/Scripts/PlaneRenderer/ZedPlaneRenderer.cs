@@ -13,6 +13,9 @@ public class ZedPlaneRenderer : MonoBehaviour
     [SerializeField]
     Mesh _quadMesh = null;
 
+    [SerializeField]
+    Vector3 _offset = new Vector3(0.0315f, 0, 0.115f);
+
     #endregion
 
     #region Private fields
@@ -71,11 +74,6 @@ public class ZedPlaneRenderer : MonoBehaviour
         }
     }
 
-    [SerializeField]
-    Vector3 _pos = Vector3.forward;
-    [SerializeField]
-    Vector3 _scale = Vector3.one;
-
     private void Update()
     {
         if (!_manager.IsZEDReady) return;
@@ -94,6 +92,10 @@ public class ZedPlaneRenderer : MonoBehaviour
         _transformMatrices[1] = mat * _planeMatrices[1];
 
         _propertyBlock.SetMatrixArray("_TransformMatrices", _transformMatrices);
+        _propertyBlock.SetTexture("_DepthTextureLeft", _depthTexture);
+        _propertyBlock.SetTexture("_DepthTextureRight", _depthRightTexture);
+        _propertyBlock.SetTexture("_NormalTextureLeft", _normalTexture);
+        _propertyBlock.SetTexture("_NormalTextureRight", _normalRightTexture);
 
         _commandBuffer.Clear();
         // _commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
@@ -124,13 +126,11 @@ public class ZedPlaneRenderer : MonoBehaviour
         var scale0 = scale(pos0, fovY);
         var scale1 = scale(pos1, fovY);
 
+        pos0 += new Vector3(-1f * _offset.x, _offset.y, _offset.z);
+        pos1 += _offset;
+
         _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, scale0);
         _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, scale1);
-
-        Debug.Log(pos0);
-        Debug.Log(pos1);
-        Debug.Log(scale0);
-        Debug.Log(scale1);
     }
 
     #endregion
