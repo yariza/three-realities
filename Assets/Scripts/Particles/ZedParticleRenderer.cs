@@ -129,7 +129,6 @@ public class ZedParticleRenderer : MonoBehaviour
     private void Awake()
     {
         _manager = CustomZedManager.Instance;
-        CustomZedManager.OnZEDReady += OnZedReady;
 
         _idPositionBuffer = Shader.PropertyToID("_PositionBuffer");
         _idColorBuffer = Shader.PropertyToID("_ColorBuffer");
@@ -156,6 +155,7 @@ public class ZedParticleRenderer : MonoBehaviour
         {
             _handMask = FindObjectOfType<HandMaskRenderer>();
         }
+
     }
 
     private void OnEnable()
@@ -176,6 +176,15 @@ public class ZedParticleRenderer : MonoBehaviour
         // _propertyBlock.SetBuffer(_idParticleBuffer, _particleBuffer);
 
         _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+
+        if (_manager.IsZEDReady)
+        {
+            OnZedReady();
+        }
+        else
+        {
+            CustomZedManager.OnZEDReady += OnZedReady;
+        }
     }
 
     private void OnDisable()
@@ -185,6 +194,8 @@ public class ZedParticleRenderer : MonoBehaviour
         {
             _camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
         }
+
+        CustomZedManager.OnZEDReady -= OnZedReady;
     }
 
     private void Update()
