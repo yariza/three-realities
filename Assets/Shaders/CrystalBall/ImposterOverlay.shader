@@ -17,7 +17,7 @@ Shader "Unlit/ImposterOverlay"
         ZWrite On
         // ColorMask 0
         ZTest Always
-        Blend DstColor Zero
+        Blend One SrcAlpha
 
         Pass
         {
@@ -98,8 +98,11 @@ Shader "Unlit/ImposterOverlay"
 
                 fr = lerp(1.0, fr, fade);
 
+                half3 rimColor = _RimColor.rgb * saturate((t - _RimFadeOffset) * _RimFadeInvDistance);
+                half rim = pow(1.0 - dot(v, n), _RimFresnel);
+
                 float4 col;
-                col = float4(fr.xxx, 1);
+                col = float4(rimColor * rim, fr);
                 return col;
             }
             ENDCG

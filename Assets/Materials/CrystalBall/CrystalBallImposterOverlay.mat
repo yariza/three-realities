@@ -76,7 +76,7 @@ Material:
     - _RefractionIndex: 0.9
     - _RimFadeInvDistance: 10
     - _RimFadeOffset: 0.1
-    - _RimFresnel: 8.3
+    - _RimFresnel: 6
     - _Scale: 0.3
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -86,4 +86,4 @@ Material:
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _RimColor: {r: 0.16825384, g: 0.1727672, b: 0.1792453, a: 1}
+    - _RimColor: {r: 0.60555357, g: 0.6294255, b: 0.6792453, a: 1}
