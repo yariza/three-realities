@@ -23,6 +23,15 @@ public class ZedPointCloudRenderer : MonoBehaviour
     [SerializeField]
     PhysicsGrid _grid;
 
+    [SerializeField]
+    bool _useCustomZedManager;
+
+    [SerializeField]
+    Vector3 _offset = Vector3.zero;
+
+    [SerializeField]
+    CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
+
     #endregion
 
     #region Private fields
@@ -48,6 +57,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 	bool _gotTextures = false;
 
     CommandBuffer _commandBuffer;
+    CameraEvent _memoizedCameraEvent;
 
     #endregion
 
@@ -72,12 +82,21 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     void OnEnable()
     {
-        ZEDManager.OnZEDReady += OnZedReady;
-        ZEDManager.OnZEDDisconnected += OnZedDisconnected;
+        if (_useCustomZedManager)
+        {
+            CustomZedManager.OnZEDReady += OnZedReady;
+            CustomZedManager.OnZEDDisconnected += OnZedDisconnected;
+        }
+        else
+        {
+            ZEDManager.OnZEDReady += OnZedReady;
+            ZEDManager.OnZEDDisconnected += OnZedDisconnected;
+        }
 
         if (_commandBuffer != null)
         {
-            _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+            _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+            _memoizedCameraEvent = _cameraEvent;
         }
     }
 
@@ -88,7 +107,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         if (_commandBuffer != null)
         {
-            _camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
         }
     }
 
@@ -98,26 +117,50 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
 		if (!_gotTextures)
 		{
-			if (_renderingPlane.TextureEye != null)
+            if (_renderingPlane == null)
+            {
+                if (_useCustomZedManager)
+                {
+                    var manager = CustomZedManager.Instance;
+                    if (!manager.IsZEDReady) return;
+                    var zedCamera = manager.zedCamera;
+                    _colorTexture = zedCamera.CreateTextureImageType(sl.VIEW.LEFT);
+                    _depthTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH);
+                    _material.SetTexture("_ColorTex", _colorTexture);
+                    _material.SetTexture("_DepthTex", _depthTexture);
+                    _gotTextures = true;
+                }
+            }
+			else if (_renderingPlane.TextureEye != null)
 			{
 				_colorTexture = _renderingPlane.TextureEye;
 				_depthTexture = _renderingPlane.Depth;
-				_material.SetTexture("_ColorTex", _colorTexture);
-				_material.SetTexture("_DepthTex", _depthTexture);
-				_gotTextures = true;
+                _material.SetTexture("_ColorTex", _colorTexture);
+                _material.SetTexture("_DepthTex", _depthTexture);
+                _gotTextures = true;
 			}
 		}
 
-        _material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
-        _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
+        _material.SetMatrix(_inverseViewMatrixId, Matrix4x4.Translate(-_offset) * _camera.transform.localToWorldMatrix);
+        _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix * Matrix4x4.Translate(_offset));
         _material.SetVector(_cameraPositionId, _camera.transform.position);
 		_material.SetFloat(_particleSizeId, _particleSize);
         _material.SetFloat(_particleSizeBumpId, _particleSizeBump);
 
-		_material.SetVector(_grid.idPhysicsGridSize, _grid.size);
-		_material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
-		_material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
-		_material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+        if (_grid != null)
+        {
+            _material.SetVector(_grid.idPhysicsGridSize, _grid.size);
+            _material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
+            _material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
+            _material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+        }
+
+        // if (_memoizedCameraEvent != _cameraEvent)
+        // {
+        //     _camera.RemoveCommandBuffer(_memoizedCameraEvent, _commandBuffer);
+        //     _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        //     _memoizedCameraEvent = _cameraEvent;
+        // }
     }
 
     // void OnRenderObject()
@@ -142,6 +185,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
         _zed = sl.ZEDCamera.GetInstance();
 
         bool right = _camera.stereoTargetEye == StereoTargetEyeMask.Right;
+        // bool center = _camera.stereoTargetEye == StereoTargetEyeMask.Both;
 
 		var plane = GetComponent<ZEDRenderingPlane>();
 
@@ -162,10 +206,13 @@ public class ZedPointCloudRenderer : MonoBehaviour
             _material.SetTexture("_HandMaskTex", handMask.texture);
         }
 
-		_material.SetVector(_grid.idPhysicsGridSize, _grid.size);
-		_material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
-		_material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
-		_material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+        if (_grid != null)
+        {
+            _material.SetVector(_grid.idPhysicsGridSize, _grid.size);
+            _material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
+            _material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
+            _material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+        }
 
         //Move the plane with the optical centers.
         float plane_distance = 0.15f;
@@ -200,7 +247,8 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
         _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
 
-        _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        _memoizedCameraEvent = _cameraEvent;
     }
 
     void OnZedDisconnected()

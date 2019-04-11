@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ZedParticleDepth
-  m_Shader: {fileID: 4800000, guid: 06f77e2b5c684b44886443c5d0570814, type: 3}
+  m_Name: ZedParticle 1
+  m_Shader: {fileID: 4800000, guid: 226b7df81b2e3bd4eb5949e35715154c, type: 3}
   m_ShaderKeywords: _COLORMODE_SINGLE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -72,7 +72,6 @@ Material:
     - _BumpScale: 1
     - _ColorMode: 0
     - _Cutoff: 0.5
-    - _Density: 0.714
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
@@ -94,7 +93,5 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color0: {r: 0.8867924, g: 0.5222205, b: 0.48940903, a: 1}
-    - _Color1: {r: 0, g: 0.013410818, b: 0.18867922, a: 0}
     - _Color2: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

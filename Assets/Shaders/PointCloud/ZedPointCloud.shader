@@ -82,11 +82,11 @@
 
 				// worldPos += normalize(distDir) * offset * 0.1;
 
-				float dist = length(worldPos - _CameraPosition);
-				float minDist = 1.0;
-				float offset = max(dist - minDist, 0.0);
+				// float dist = length(worldPos - _CameraPosition);
+				// float minDist = 1.0;
+				// float offset = max(dist - minDist, 0.0);
 
-				worldPos.y -= pow(offset, 4.0);
+				// worldPos.y -= pow(offset, 4.0);
 
 				// float3 handDir;
 				// float handDist;
@@ -124,7 +124,8 @@
 				// float gray = dot(color, float3(0.3, 0.59, 0.11));
 
 				// o.color =  float4(lerp(gray * 0.1, color, offset), 1.0f);
-				o.color = float4(color, saturate(1.0 - offset * 1.3));
+				// o.color = float4(color, saturate(1.0 - offset * 1.3));
+				o.color = float4(color, 1.0);
 
 				o.psize = _PointSize;
 

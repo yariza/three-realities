@@ -73,6 +73,9 @@ public class ZedParticleRenderer : MonoBehaviour
     [SerializeField, Range(0, 0.5f)]
     float _handRadius = 0.2f;
 
+    [SerializeField]
+    CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
+
     #endregion
 
     #region Fields
@@ -85,6 +88,7 @@ public class ZedParticleRenderer : MonoBehaviour
     RenderTexture _colorBuffer2;
     RenderTexture _positionBuffer1;
     RenderTexture _positionBuffer2;
+    CameraEvent _memoizedCameraEvent;
 
     Texture2D _xyzTexture;
     Texture2D _colorTexture;
@@ -175,7 +179,8 @@ public class ZedParticleRenderer : MonoBehaviour
 
         // _propertyBlock.SetBuffer(_idParticleBuffer, _particleBuffer);
 
-        _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        _memoizedCameraEvent = _cameraEvent;
 
         if (_manager.IsZEDReady)
         {
@@ -192,7 +197,7 @@ public class ZedParticleRenderer : MonoBehaviour
         // _particleBuffer.Release();
         if (_camera != null)
         {
-            _camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
         }
 
         CustomZedManager.OnZEDReady -= OnZedReady;
@@ -225,6 +230,13 @@ public class ZedParticleRenderer : MonoBehaviour
             _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0,
                 MeshTopology.Triangles, 3, Mathf.Min(_batchSize, numParticles - i), _propertyBlock);
         }
+
+        // if (_cameraEvent != _memoizedCameraEvent)
+        // {
+        //     _camera.RemoveCommandBuffer(_memoizedCameraEvent, _commandBuffer);
+        //     _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        //     _memoizedCameraEvent = _cameraEvent;
+        // }
     }
 
     private void OnRenderObject()
