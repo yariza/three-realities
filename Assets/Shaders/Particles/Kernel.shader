@@ -34,13 +34,21 @@
     float nrand(float2 uv, float salt)
     {
         uv += float2(salt, _Config.y);
-        return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+        float2 KI = float2(
+            23.14069263277926, // e^pi (Gelfond's constant)
+            2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+        );
+        return frac(sin(dot(uv, KI)) * 43758.5453);
     }
 
     float nrand(float3 uvt, float salt)
     {
         uvt += float3(salt, _Config.y, salt * 0.193456);
-        return frac(sin(dot(uvt, float3(12.9898, 78.233, 56.234))) * 43758.5453);
+        float2 KI = float2(
+            23.14069263277926, // e^pi (Gelfond's constant)
+            2.665144142690225 // 2^sqrt(2) (Gelfondâ€“Schneider constant)
+        );
+        return frac(sin(dot(uvt, float3(KI, 56.234))) * 43758.5453);
     }
 
     float4 new_particle_position(float2 uv)
