@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-[RequireComponent(typeof(Camera))]
+// [RequireComponent(typeof(Camera))]
 public class ZedPointCloudRenderer : MonoBehaviour
 {
     #region Serialized fields
@@ -24,7 +24,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
     PhysicsGrid _grid;
 
     [SerializeField]
-    bool _useCustomZedManager;
+    HandMaskRenderer _handMask;
 
     [SerializeField]
     Vector3 _offset = Vector3.zero;
@@ -36,28 +36,34 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     #region Private fields
 
-    Camera _camera;
-    // Texture2D _xyzTexture;
     Texture2D _depthTexture;
+    Texture2D _depthRightTexture;
+    // Texture2D _normalTexture;
+    // Texture2D _normalRightTexture;
     Texture2D _colorTexture;
-    Material _material;
-    bool _ready = false;
-    int _numberOfPoints;
-    sl.ZEDCamera _zed;
+    Texture2D _colorRightTexture;
 
-    int _inverseViewMatrixId;
-    int _viewMatrixId;
-    int _cameraPositionId;
-	int _particleSizeId;
+    Camera _camera;
+    Material _material;
+    int _numberOfPoints;
+
+    int _particleSizeId;
     int _particleSizeBumpId;
 
     Matrix4x4 _cameraMatrix;
 
-	ZEDRenderingPlane _renderingPlane;
-	bool _gotTextures = false;
-
     CommandBuffer _commandBuffer;
     CameraEvent _memoizedCameraEvent;
+
+    Vector3 _cameraPosition;
+    Vector3 _cameraScale;
+    CustomZedManager _manager;
+
+    const int NUM_EYES = 2;
+    Matrix4x4[] _planeMatrices = new Matrix4x4[NUM_EYES];
+    Matrix4x4[] _transformMatrices = new Matrix4x4[NUM_EYES];
+
+    private float aspect = 16.0f / 9.0f;
 
     #endregion
 
@@ -65,33 +71,32 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     void Awake()
     {
-		_camera = GetComponent<Camera>();
-		_renderingPlane = GetComponent<ZEDRenderingPlane>();
-        _inverseViewMatrixId = Shader.PropertyToID("_InverseViewMatrix");
-        _viewMatrixId = Shader.PropertyToID("_ViewMatrix");
-        _cameraPositionId = Shader.PropertyToID("_CameraPosition");
-		_particleSizeId = Shader.PropertyToID("_ParticleSize");
+        _camera = GetComponent<Camera>();
+        if (_camera == null)
+        {
+            _camera = Camera.main;
+        }
+
+        _particleSizeId = Shader.PropertyToID("_ParticleSize");
         _particleSizeBumpId = Shader.PropertyToID("_ParticleSizeBump");
 
         if (_grid == null)
         {
             _grid = FindObjectOfType<PhysicsGrid>();
         }
-		_material = new Material(_pointCloudShader);
+        _material = new Material(_pointCloudShader);
+
+        _manager = CustomZedManager.Instance;
+        _commandBuffer = new CommandBuffer();
     }
 
     void OnEnable()
     {
-        if (_useCustomZedManager)
+        if (_manager.IsZEDReady)
         {
-            CustomZedManager.OnZEDReady += OnZedReady;
-            CustomZedManager.OnZEDDisconnected += OnZedDisconnected;
+            OnZedReady();
         }
-        else
-        {
-            ZEDManager.OnZEDReady += OnZedReady;
-            ZEDManager.OnZEDDisconnected += OnZedDisconnected;
-        }
+        CustomZedManager.OnZEDReady += OnZedReady;
 
         if (_commandBuffer != null)
         {
@@ -102,10 +107,9 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     void OnDisable()
     {
-        ZEDManager.OnZEDReady -= OnZedReady;
-        ZEDManager.OnZEDDisconnected -= OnZedDisconnected;
+        CustomZedManager.OnZEDReady -= OnZedReady;
 
-        if (_commandBuffer != null)
+        if (_commandBuffer != null && _camera != null)
         {
             _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
         }
@@ -113,38 +117,30 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     void Update()
     {
-        if (_material == null) return;
+        if (!_manager.IsZEDReady) return;
 
-		if (!_gotTextures)
-		{
-            if (_renderingPlane == null)
-            {
-                if (_useCustomZedManager)
-                {
-                    var manager = CustomZedManager.Instance;
-                    if (!manager.IsZEDReady) return;
-                    var zedCamera = manager.zedCamera;
-                    _colorTexture = zedCamera.CreateTextureImageType(sl.VIEW.LEFT);
-                    _depthTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH);
-                    _material.SetTexture("_ColorTex", _colorTexture);
-                    _material.SetTexture("_DepthTex", _depthTexture);
-                    _gotTextures = true;
-                }
-            }
-			else if (_renderingPlane.TextureEye != null)
-			{
-				_colorTexture = _renderingPlane.TextureEye;
-				_depthTexture = _renderingPlane.Depth;
-                _material.SetTexture("_ColorTex", _colorTexture);
-                _material.SetTexture("_DepthTex", _depthTexture);
-                _gotTextures = true;
-			}
-		}
+        if (_manager.HMDSyncRotation.x == 0 &&
+            _manager.HMDSyncRotation.y == 0 &&
+            _manager.HMDSyncRotation.z == 0 &&
+            _manager.HMDSyncRotation.w == 0)
+            return;
 
-        _material.SetMatrix(_inverseViewMatrixId, Matrix4x4.Translate(-_offset) * _camera.transform.localToWorldMatrix);
-        _material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix * Matrix4x4.Translate(_offset));
-        _material.SetVector(_cameraPositionId, _camera.transform.position);
-		_material.SetFloat(_particleSizeId, _particleSize);
+        var mat = Matrix4x4.TRS(_camera.transform.position, _manager.HMDSyncRotation, Vector3.one);
+
+        _material.SetMatrix("_Transform", mat);
+        Vector3 pos0 = _pos0 + new Vector3(-1f * _offset.x, _offset.y, _offset.z);
+        Vector3 pos1 = _pos1 + new Vector3( 1f * _offset.x, _offset.y, _offset.z);
+
+        _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, _scale0);
+        _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, _scale1);
+        _material.SetMatrixArray("_PlaneMatrices", _planeMatrices);
+
+        _transformMatrices[0] = mat * _planeMatrices[0];
+        _transformMatrices[1] = mat * _planeMatrices[1];
+
+        _material.SetMatrixArray("_TransformMatrices", _transformMatrices);
+
+        _material.SetFloat(_particleSizeId, _particleSize);
         _material.SetFloat(_particleSizeBumpId, _particleSizeBump);
 
         if (_grid != null)
@@ -155,6 +151,13 @@ public class ZedPointCloudRenderer : MonoBehaviour
             _material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
         }
 
+        _material.SetTexture("_DepthTextureLeft", _depthTexture);
+        _material.SetTexture("_DepthTextureRight", _depthRightTexture);
+        // _material.SetTexture("_NormalTextureLeft", _normalTexture);
+        // _material.SetTexture("_NormalTextureRight", _normalRightTexture);
+        _material.SetTexture("_ColorTextureLeft", _colorTexture);
+        _material.SetTexture("_ColorTextureRight", _colorRightTexture);
+
         // if (_memoizedCameraEvent != _cameraEvent)
         // {
         //     _camera.RemoveCommandBuffer(_memoizedCameraEvent, _commandBuffer);
@@ -163,47 +166,36 @@ public class ZedPointCloudRenderer : MonoBehaviour
         // }
     }
 
-    // void OnRenderObject()
+    // private void OnRenderObject()
     // {
-    // 	if (!_ready) return;
-    // 	var curCamera = Camera.current;
-    // 	var scene = !curCamera.stereoEnabled;
-    // 	if (curCamera.stereoTargetEye != _camera.stereoTargetEye) return;
-
-    // 	_material.SetMatrix(_inverseViewMatrixId, _camera.transform.localToWorldMatrix);
-    // 	_material.SetMatrix(_viewMatrixId, _camera.transform.worldToLocalMatrix);
-    // 	_material.SetPass(0);
-    // 	Graphics.DrawProcedural(MeshTopology.Points, 1, _numberOfPoints);
+        // _material.SetPass(0);
+        // Graphics.DrawProcedural(MeshTopology.Points, 1, _numberOfPoints);
     // }
 
     #endregion
+
+    Vector3 _pos0, _pos1;
+    Vector3 _scale0, _scale1;
 
     #region Zed events
 
     void OnZedReady()
     {
-        _zed = sl.ZEDCamera.GetInstance();
+        var zedCamera = _manager.zedCamera;
 
-        bool right = _camera.stereoTargetEye == StereoTargetEyeMask.Right;
-        // bool center = _camera.stereoTargetEye == StereoTargetEyeMask.Both;
-
-		var plane = GetComponent<ZEDRenderingPlane>();
-
-        // _xyzTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.XYZ_RIGHT : sl.MEASURE.XYZ);
-        // _colorTexture = _zed.CreateTextureImageType(right ? sl.VIEW.RIGHT : sl.VIEW.LEFT);
-        // _depthTexture = _zed.CreateTextureMeasureType(right ? sl.MEASURE.DEPTH_RIGHT : sl.MEASURE.DEPTH);
-
-        var pointWidth = Mathf.FloorToInt(_zed.ImageWidth * _resolutionScale);
-        var pointHeight = Mathf.FloorToInt(_zed.ImageHeight * _resolutionScale);
+        var pointWidth = Mathf.FloorToInt(zedCamera.ImageWidth * _resolutionScale);
+        var pointHeight = Mathf.FloorToInt(zedCamera.ImageHeight * _resolutionScale);
         _numberOfPoints = pointWidth * pointHeight;
 
-        // _material.SetTexture("_XYZTex", _xyzTexture);
         _material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
 
-        var handMask = GetComponent<HandMaskRenderer>();
-        if (handMask != null)
+        if (_handMask == null)
         {
-            _material.SetTexture("_HandMaskTex", handMask.texture);
+            _handMask = GetComponent<HandMaskRenderer>();
+        }
+        if (_handMask != null)
+        {
+            _material.SetTexture("_HandMaskTex", _handMask.texture);
         }
 
         if (_grid != null)
@@ -214,46 +206,39 @@ public class ZedPointCloudRenderer : MonoBehaviour
             _material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
         }
 
-        //Move the plane with the optical centers.
-        float plane_distance = 0.15f;
-        Vector4 opticalCenters = _zed.ComputeOpticalCenterOffsets(plane_distance);
+        _depthTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH);
+        _depthRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH_RIGHT);
+        // _normalTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS);
+        // _normalRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS_RIGHT);
+        _colorTexture = zedCamera.CreateTextureImageType(sl.VIEW.LEFT);
+        _colorRightTexture = zedCamera.CreateTextureImageType(sl.VIEW.RIGHT);
 
-        var position = right ? new Vector3(opticalCenters.z, -1.0f * opticalCenters.w, plane_distance)
-                             : new Vector3(opticalCenters.x, -1.0f * opticalCenters.y, plane_distance);
-        Matrix4x4 projMatrix = _zed.Projection;
-        var near = 0.1f;
-        var far = 500f;
-        projMatrix[2, 2] = -(far + near) / (far - near);
-        projMatrix[2, 3] = -(2.0f * far * near) / (far - near);
+		float plane_distance =0.15f;
+		Vector4 opticalCenters = zedCamera.ComputeOpticalCenterOffsets(plane_distance);
 
-        var aspect = 16f / 9f;
-        var fov = GetFOVYFromProjectionMatrix(projMatrix);
-        float height = Mathf.Tan(0.5f * fov) * Vector3.Distance(position, Vector3.zero) * 2;
-        var scale = new Vector3((height * aspect), height, 1);
+        var pos0 = new Vector3(opticalCenters.x, -1.0f * opticalCenters.y,plane_distance);
+        var pos1 = new Vector3(opticalCenters.z, -1.0f * opticalCenters.w,plane_distance);
 
-        _cameraMatrix = Matrix4x4.TRS(position, Quaternion.identity, scale);
-        // Debug.Log("position " + position.ToString("0.0000"));
-        // Debug.Log("scale " + scale.ToString("0.0000"));
-        _material.SetMatrix("_Position", _cameraMatrix);
+        var projMatrix = zedCamera.Projection;
+        var fovY = GetFOVYFromProjectionMatrix(projMatrix);
 
-        var topLeft = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(-0.5f, 0.5f, 0));
-        // Debug.Log(topLeft);
-        var bottomRight = _camera.ViewportToScreenPoint(_camera.projectionMatrix * _cameraMatrix * new Vector3(0.5f, -0.5f, 0));
-        // Debug.Log(bottomRight);
+        var scale0 = scale(pos0, fovY);
+        var scale1 = scale(pos1, fovY);
 
-        _ready = true;
+        _pos0 = pos0;
+        _pos1 = pos1;
+        _scale0 = scale0;
+        _scale1 = scale1;
 
-        _commandBuffer = new CommandBuffer();
+        pos0 += new Vector3(-1f * _offset.x, _offset.y, _offset.z);
+        pos1 += new Vector3( 1f * _offset.x, _offset.y, _offset.z);
 
+        _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, scale0);
+        _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, scale1);
+
+        _commandBuffer.Clear();
         _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
-
-        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
         _memoizedCameraEvent = _cameraEvent;
-    }
-
-    void OnZedDisconnected()
-    {
-        _ready = false;
     }
 
     #endregion
@@ -270,6 +255,11 @@ public class ZedPointCloudRenderer : MonoBehaviour
         return Mathf.Atan(1 / projection[1, 1]) * 2.0f;
     }
 
+    private Vector3 scale(Vector3 position, float fov)
+    {
+        float height = Mathf.Tan(0.5f * fov) * Vector3.Distance(position, Vector3.zero) * 2;
+        return new Vector3((height * aspect), height, 1);
+    }
 
     #endregion
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Leap.Unity;
 
-[RequireComponent(typeof(Camera))]
+// [RequireComponent(typeof(Camera))]
 public class HandMaskRenderer : MonoBehaviour
 {
     [SerializeField]
@@ -39,6 +39,10 @@ public class HandMaskRenderer : MonoBehaviour
     void Awake()
     {
         _camera = GetComponent<Camera>();
+        if (_camera == null)
+        {
+            _camera = Camera.main;
+        }
         var width = _camera.pixelWidth;
         var height = _camera.pixelHeight;
 
@@ -71,7 +75,7 @@ public class HandMaskRenderer : MonoBehaviour
 
     void OnDisable()
     {
-        if (_commandBuffer != null)
+        if (_commandBuffer != null && _camera != null)
         {
             _camera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, _commandBuffer);
         }

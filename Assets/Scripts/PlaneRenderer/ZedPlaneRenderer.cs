@@ -16,6 +16,9 @@ public class ZedPlaneRenderer : MonoBehaviour
     [SerializeField]
     Vector3 _offset = new Vector3(0.0315f, 0, 0.115f);
 
+    [SerializeField]
+    CameraEvent _cameraEvent = CameraEvent.AfterForwardAlpha;
+
     #endregion
 
     #region Private fields
@@ -33,6 +36,8 @@ public class ZedPlaneRenderer : MonoBehaviour
     Texture2D _depthRightTexture;
     Texture2D _normalTexture;
     Texture2D _normalRightTexture;
+    Texture2D _colorTexture;
+    Texture2D _colorRightTexture;
 
     /// <summary>
     /// Aspect ratio of the textures. All the textures displayed should be in 16:9.
@@ -58,11 +63,8 @@ public class ZedPlaneRenderer : MonoBehaviour
         {
             OnZedReady();
         }
-        else
-        {
-            CustomZedManager.OnZEDReady += OnZedReady;
-        }
-        _camera.AddCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+        CustomZedManager.OnZEDReady += OnZedReady;
+        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
     }
 
     private void OnDisable()
@@ -70,7 +72,7 @@ public class ZedPlaneRenderer : MonoBehaviour
         CustomZedManager.OnZEDReady -= OnZedReady;
         if (_camera != null)
         {
-            _camera.RemoveCommandBuffer(CameraEvent.AfterForwardOpaque, _commandBuffer);
+            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
         }
     }
 
@@ -96,10 +98,12 @@ public class ZedPlaneRenderer : MonoBehaviour
         _propertyBlock.SetTexture("_DepthTextureRight", _depthRightTexture);
         _propertyBlock.SetTexture("_NormalTextureLeft", _normalTexture);
         _propertyBlock.SetTexture("_NormalTextureRight", _normalRightTexture);
+        _propertyBlock.SetTexture("_ColorTextureLeft", _colorTexture);
+        _propertyBlock.SetTexture("_ColorTextureRight", _colorRightTexture);
 
         _commandBuffer.Clear();
-        // _commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
-        Graphics.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, null, 0, _propertyBlock);
+        _commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
+        // Graphics.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, null, 0, _propertyBlock);
     }
 
     #endregion
@@ -113,6 +117,8 @@ public class ZedPlaneRenderer : MonoBehaviour
         _depthRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH_RIGHT);
         _normalTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS);
         _normalRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS_RIGHT);
+        _colorTexture = zedCamera.CreateTextureImageType(sl.VIEW.LEFT);
+        _colorRightTexture = zedCamera.CreateTextureImageType(sl.VIEW.RIGHT);
 
 		float plane_distance =0.15f;
 		Vector4 opticalCenters = zedCamera.ComputeOpticalCenterOffsets(plane_distance);

@@ -32,6 +32,8 @@
             float4 _Color0;
             float4 _Color1;
 
+            sampler2D _ColorTextureLeft;
+            sampler2D _ColorTextureRight;
             sampler2D _DepthTextureLeft;
             sampler2D _DepthTextureRight;
             sampler2D _NormalTextureLeft;
@@ -50,14 +52,18 @@
             fixed4 frag (v2f i) : SV_Target
             {
                 float depth;
+                // float4 color;
                 if (unity_StereoEyeIndex > 0)
                 {
                     depth = tex2D(_DepthTextureRight, i.uv).r;
+                    // color = tex2D(_ColorTextureRight, i.uv).bgra;
                 }
                 else
                 {
                     depth = tex2D(_DepthTextureLeft, i.uv).r;
+                    // color = tex2D(_ColorTextureLeft, i.uv).bgra;
                 }
+                // return color;
 
                 float fog = exp(-depth * depth * _Density);
                 float3 fogColor = lerp(_Color1.rgb, _Color0.rgb, saturate(fog));
