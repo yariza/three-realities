@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class PortalRenderer : MonoBehaviour
+public class PortalRenderer : Renderable
 {
     #region Serialized fields
 
@@ -14,14 +14,14 @@ public class PortalRenderer : MonoBehaviour
     Material _portalMaterial;
 
     [SerializeField]
-    CameraEvent _cameraEvent = CameraEvent.BeforeForwardAlpha;
+    Renderable _target;
 
     #endregion
 
     #region Fields
 
     Camera _camera;
-    CommandBuffer _commandBuffer;
+    // CommandBuffer _commandBuffer;
     MeshFilter _meshFilter;
 
     #endregion
@@ -31,28 +31,42 @@ public class PortalRenderer : MonoBehaviour
     private void Awake()
     {
         _camera = Camera.main;
-        _commandBuffer = new CommandBuffer();
+        // _commandBuffer = new CommandBuffer();
         _meshFilter = GetComponent<MeshFilter>();
     }
 
     private void OnEnable()
     {
-        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        var manager = RenderableManager.instance;
+        manager.AddRenderable(this);
+        manager.AddRenderable(_target);
     }
 
     private void OnDisable()
     {
-        if (_camera != null)
+        var manager = RenderableManager.instance;
+        if (manager != null)
         {
-            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
+            manager.RemoveRenderable(this);
         }
+    }
+
+    public void EnterPortal()
+    {
+        RenderableManager.instance.RemoveFirstRenderable();
+        gameObject.SetActive(false);
+    }
+
+    public override void Render(CommandBuffer commandBuffer)
+    {
+        commandBuffer.DrawProcedural(Matrix4x4.identity, _fillZMaterial, 0, MeshTopology.Triangles, 3, 1, null);
+        commandBuffer.DrawMesh(_meshFilter.sharedMesh, transform.localToWorldMatrix, _portalMaterial, 0, 0, null);
     }
 
     private void Update()
     {
-        _commandBuffer.Clear();
-        _commandBuffer.DrawProcedural(Matrix4x4.identity, _fillZMaterial, 0, MeshTopology.Triangles, 3, 1, null);
-        _commandBuffer.DrawMesh(_meshFilter.sharedMesh, transform.localToWorldMatrix, _portalMaterial, 0, 0, null);
+        // _commandBuffer.Clear();
+        // Render(_commandBuffer);
     }
 
     #endregion

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class ZedPlaneRenderer : MonoBehaviour
+public class ZedPlaneRenderer : Renderable
 {
     #region Serialized fields
 
@@ -16,8 +16,8 @@ public class ZedPlaneRenderer : MonoBehaviour
     [SerializeField]
     Vector3 _offset = new Vector3(0.0315f, 0, 0.115f);
 
-    [SerializeField]
-    CameraEvent _cameraEvent = CameraEvent.AfterForwardAlpha;
+    // [SerializeField]
+    // CameraEvent _cameraEvent = CameraEvent.AfterForwardAlpha;
 
     #endregion
 
@@ -64,16 +64,21 @@ public class ZedPlaneRenderer : MonoBehaviour
             OnZedReady();
         }
         CustomZedManager.OnZEDReady += OnZedReady;
-        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        // _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
     }
 
     private void OnDisable()
     {
         CustomZedManager.OnZEDReady -= OnZedReady;
-        if (_camera != null)
-        {
-            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
-        }
+        // if (_camera != null)
+        // {
+            // _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
+        // }
+    }
+
+    public override void Render(CommandBuffer commandBuffer)
+    {
+        commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
     }
 
     private void Update()
@@ -100,10 +105,6 @@ public class ZedPlaneRenderer : MonoBehaviour
         _propertyBlock.SetTexture("_NormalTextureRight", _normalRightTexture);
         _propertyBlock.SetTexture("_ColorTextureLeft", _colorTexture);
         _propertyBlock.SetTexture("_ColorTextureRight", _colorRightTexture);
-
-        _commandBuffer.Clear();
-        _commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
-        // Graphics.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, null, 0, _propertyBlock);
     }
 
     #endregion

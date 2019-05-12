@@ -9,8 +9,8 @@ public class PortalController : MonoBehaviour
     [SerializeField, Range(0, 0.3f)]
     float _distance;
 
-    [SerializeField]
-    GameObject _disableObject;
+    // [SerializeField]
+    // GameObject _disableObject;
 
     #endregion
 
@@ -18,6 +18,7 @@ public class PortalController : MonoBehaviour
 
     Camera _camera;
     Transform _cameraTransform;
+    PortalRenderer _portalRenderer;
 
     #endregion
 
@@ -27,6 +28,7 @@ public class PortalController : MonoBehaviour
     {
         _camera = Camera.main;
         _cameraTransform = _camera.transform;
+        _portalRenderer = GetComponent<PortalRenderer>();
     }
 
     private void Update()
@@ -34,8 +36,9 @@ public class PortalController : MonoBehaviour
         if (Vector3.Distance(_cameraTransform.position, transform.position) < _distance &&
             Vector3.Dot(_cameraTransform.forward, transform.position - _cameraTransform.position) > 0)
         {
-            _disableObject.SetActive(false);
-            gameObject.SetActive(false);
+            // _disableObject.SetActive(false);
+            // gameObject.SetActive(false);
+            _portalRenderer.EnterPortal();
         }
     }
 

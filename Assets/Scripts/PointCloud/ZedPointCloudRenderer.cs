@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 // [RequireComponent(typeof(Camera))]
-public class ZedPointCloudRenderer : MonoBehaviour
+public class ZedPointCloudRenderer : Renderable
 {
     #region Serialized fields
 
@@ -29,8 +29,8 @@ public class ZedPointCloudRenderer : MonoBehaviour
     [SerializeField]
     Vector3 _offset = Vector3.zero;
 
-    [SerializeField]
-    CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
+    // [SerializeField]
+    // CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
 
     #endregion
 
@@ -52,8 +52,8 @@ public class ZedPointCloudRenderer : MonoBehaviour
 
     Matrix4x4 _cameraMatrix;
 
-    CommandBuffer _commandBuffer;
-    CameraEvent _memoizedCameraEvent;
+    // CommandBuffer _commandBuffer;
+    // CameraEvent _memoizedCameraEvent;
 
     Vector3 _cameraPosition;
     Vector3 _cameraScale;
@@ -87,7 +87,7 @@ public class ZedPointCloudRenderer : MonoBehaviour
         _material = new Material(_pointCloudShader);
 
         _manager = CustomZedManager.Instance;
-        _commandBuffer = new CommandBuffer();
+        // _commandBuffer = new CommandBuffer();
     }
 
     void OnEnable()
@@ -98,21 +98,26 @@ public class ZedPointCloudRenderer : MonoBehaviour
         }
         CustomZedManager.OnZEDReady += OnZedReady;
 
-        if (_commandBuffer != null)
-        {
-            _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
-            _memoizedCameraEvent = _cameraEvent;
-        }
+        // if (_commandBuffer != null)
+        // {
+        //     _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        //     _memoizedCameraEvent = _cameraEvent;
+        // }
     }
 
     void OnDisable()
     {
         CustomZedManager.OnZEDReady -= OnZedReady;
 
-        if (_commandBuffer != null && _camera != null)
-        {
-            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
-        }
+        // if (_commandBuffer != null && _camera != null)
+        // {
+        //     _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
+        // }
+    }
+
+    public override void Render(CommandBuffer commandBuffer)
+    {
+        commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
     }
 
     void Update()
@@ -236,9 +241,9 @@ public class ZedPointCloudRenderer : MonoBehaviour
         _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, scale0);
         _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, scale1);
 
-        _commandBuffer.Clear();
-        _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
-        _memoizedCameraEvent = _cameraEvent;
+        // _commandBuffer.Clear();
+        // _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
+        // _memoizedCameraEvent = _cameraEvent;
     }
 
     #endregion
