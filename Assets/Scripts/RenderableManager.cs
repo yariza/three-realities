@@ -33,6 +33,19 @@ public class RenderableManager : MonoBehaviour
 
     List<Renderable> _renderables = new List<Renderable>();
 
+    CommandBuffer _commandBuffer = null;
+    public CommandBuffer commandBuffer
+    {
+        get
+        {
+            if (_commandBuffer == null)
+            {
+                _commandBuffer = new CommandBuffer();
+            }
+            return _commandBuffer;
+        }
+    }
+
     #endregion
 
     #region Public methods
@@ -52,13 +65,22 @@ public class RenderableManager : MonoBehaviour
         _renderables.Remove(renderable);
     }
 
-    public void Render(CommandBuffer commandBuffer)
+    private void Update()
     {
+        _commandBuffer.Clear();
         for (int i = 0; i < _renderables.Count; i++)
         {
-            _renderables[i].Render(commandBuffer);
+            _renderables[i].Render(_commandBuffer);
         }
     }
+
+    // public void Render(CommandBuffer commandBuffer)
+    // {
+        // for (int i = 0; i < _renderables.Count; i++)
+        // {
+            // _renderables[i].Render(commandBuffer);
+        // }
+    // }
 
     #endregion
 

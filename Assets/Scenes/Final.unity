@@ -459,8 +459,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pointCloudShader: {fileID: 4800000, guid: bbce6b481a0f68c45a620be88e5b2b6c, type: 3}
   _resolutionScale: 0.5
-  _particleSize: 0.0032
-  _particleSizeBump: 0.07
+  _particleSize: 0.00632
+  _particleSizeBump: 0.14
   _grid: {fileID: 1018720462}
   _handMask: {fileID: 1018720464}
   _offset: {x: 0.0315, y: 0, z: 0.0575}

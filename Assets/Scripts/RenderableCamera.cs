@@ -22,7 +22,7 @@ public class RenderableCamera : MonoBehaviour
     #region Fields
 
     Camera _camera;
-    CommandBuffer _commandBuffer;
+    // CommandBuffer _commandBuffer;
     Camera _mainCamera;
 
     #endregion
@@ -33,28 +33,29 @@ public class RenderableCamera : MonoBehaviour
     {
         _camera = GetComponent<Camera>();
         _mainCamera = Camera.main;
-        _commandBuffer = new CommandBuffer();
+        // _commandBuffer = new CommandBuffer();
     }
 
     private void OnEnable()
     {
-        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        _camera.AddCommandBuffer(_cameraEvent, RenderableManager.instance.commandBuffer);
         CustomZedManager.OnZEDReady += ZedReady;
     }
 
     private void OnDisable()
     {
-        if (_camera != null)
+        var manager = RenderableManager.instance;
+        if (_camera != null && manager != null)
         {
-            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
+            _camera.RemoveCommandBuffer(_cameraEvent, manager.commandBuffer);
         }
         CustomZedManager.OnZEDReady -= ZedReady;
     }
 
     private void Update()
     {
-        _commandBuffer.Clear();
-        RenderableManager.instance.Render(_commandBuffer);
+        // _commandBuffer.Clear();
+        // RenderableManager.instance.Render(_commandBuffer);
 
         if (_trackZedCamera)
         {
