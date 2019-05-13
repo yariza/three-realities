@@ -17,12 +17,15 @@ public class RenderableCamera : MonoBehaviour
     [SerializeField]
     Vector3 _offset = new Vector3(0.0315f, 0f, 0.0575f);
 
+    [SerializeField]
+    bool _isMonitor = false;
+
     #endregion
 
     #region Fields
 
     Camera _camera;
-    // CommandBuffer _commandBuffer;
+    CommandBuffer _commandBuffer;
     Camera _mainCamera;
 
     #endregion
@@ -33,12 +36,12 @@ public class RenderableCamera : MonoBehaviour
     {
         _camera = GetComponent<Camera>();
         _mainCamera = Camera.main;
-        // _commandBuffer = new CommandBuffer();
+        _commandBuffer = new CommandBuffer();
     }
 
     private void OnEnable()
     {
-        _camera.AddCommandBuffer(_cameraEvent, RenderableManager.instance.commandBuffer);
+        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
         CustomZedManager.OnZEDReady += ZedReady;
     }
 
@@ -47,15 +50,15 @@ public class RenderableCamera : MonoBehaviour
         var manager = RenderableManager.instance;
         if (_camera != null && manager != null)
         {
-            _camera.RemoveCommandBuffer(_cameraEvent, manager.commandBuffer);
+            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
         }
         CustomZedManager.OnZEDReady -= ZedReady;
     }
 
     private void Update()
     {
-        // _commandBuffer.Clear();
-        // RenderableManager.instance.Render(_commandBuffer);
+        _commandBuffer.Clear();
+        RenderableManager.instance.Render(_commandBuffer, _isMonitor);
 
         if (_trackZedCamera)
         {

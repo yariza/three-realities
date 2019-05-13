@@ -207,6 +207,7 @@ MonoBehaviour:
   _cameraEvent: 11
   _trackZedCamera: 1
   _offset: {x: -0.0315, y: 0, z: 0.0575}
+  _isMonitor: 1
 --- !u!20 &214405783
 Camera:
   m_ObjectHideFlags: 0
@@ -286,7 +287,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dae011f68c9c6cb439aebb363b728603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _distance: 0.13
+  _distance: 0.17
 --- !u!114 &858777104
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -436,9 +437,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _verticalForce: 1
-  _verticalMaxDistance: 0.1
-  _horizontalMaxDistance: 1
-  _horizontalForce: 1
+  _verticalMaxDistance: 0.05
+  _horizontalMaxDistance: 0.7
+  _horizontalForce: 0.5
   _randomForce: 0.5
 --- !u!82 &858777112
 AudioSource:
@@ -629,6 +630,7 @@ MonoBehaviour:
   _resolutionScale: 0.5
   _particleSize: 0.0032
   _particleSizeBump: 0.14
+  _sizeInPixels: 0
   _grid: {fileID: 1018720462}
   _handMask: {fileID: 1018720464}
   _offset: {x: 0.0315, y: 0, z: 0.0575}
@@ -671,7 +673,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dae011f68c9c6cb439aebb363b728603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _distance: 0.13
+  _distance: 0.17
 --- !u!114 &1083353477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -821,9 +823,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _verticalForce: 1
-  _verticalMaxDistance: 0.1
-  _horizontalMaxDistance: 1
-  _horizontalForce: 1
+  _verticalMaxDistance: 0.05
+  _horizontalMaxDistance: 0.7
+  _horizontalForce: 0.5
   _randomForce: 0.5
 --- !u!82 &1083353485
 AudioSource:
@@ -1111,6 +1113,7 @@ MonoBehaviour:
   _cameraEvent: 11
   _trackZedCamera: 0
   _offset: {x: 0.0315, y: 0, z: 0.0575}
+  _isMonitor: 0
 --- !u!1 &1479727730
 GameObject:
   m_ObjectHideFlags: 0
@@ -1245,9 +1248,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _verticalForce: 1
-  _verticalMaxDistance: 0.1
-  _horizontalMaxDistance: 1
-  _horizontalForce: 1
+  _verticalMaxDistance: 0.05
+  _horizontalMaxDistance: 0.7
+  _horizontalForce: 0.5
   _randomForce: 0.5
 --- !u!114 &1479727733
 MonoBehaviour:
@@ -1261,7 +1264,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dae011f68c9c6cb439aebb363b728603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _distance: 0.13
+  _distance: 0.17
 --- !u!114 &1479727734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1674,7 +1677,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dae011f68c9c6cb439aebb363b728603, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _distance: 0.13
+  _distance: 0.17
 --- !u!114 &1993618112
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1824,9 +1827,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _verticalForce: 1
-  _verticalMaxDistance: 0.1
-  _horizontalMaxDistance: 1
-  _horizontalForce: 1
+  _verticalMaxDistance: 0.05
+  _horizontalMaxDistance: 0.7
+  _horizontalForce: 0.5
   _randomForce: 0.5
 --- !u!82 &1993618120
 AudioSource:

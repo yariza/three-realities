@@ -5,6 +5,7 @@
         _ParticleSize ("Particle Size", float) = 0.1
 		_ParticleSizeBump ("Particle Size Bump", float) = 0.3
         [Toggle] _Distance("Apply Distance", Float) = 1
+		[Toggle(SIZE_IN_PIXELS)] _SizeInPixels("Particle Size in Pixels", Float) = 0
 		_HandMaskTex("Hand Mask Texture", 2D) = "gray" {}
 		_PhysicsGridPositionTex("Position Texture", 3D) = "white" {}
 
@@ -28,6 +29,8 @@
 			#pragma fragment frag
 			// make fog work
 			// #pragma multi_compile_fog
+
+			#pragma shader_feature SIZE_IN_PIXELS
 
 			#include "UnityCG.cginc"
 
@@ -148,6 +151,10 @@
                 float2 newxy;
 				float psize = input[0].psize * input[0].position.w;
 				float2 aspect = float2(_ScreenParams.y * _ScreenParams.z - _ScreenParams.y, 1.0);
+
+				#ifdef SIZE_IN_PIXELS
+				psize *= (_ScreenParams.z - 1.0);
+				#endif
 
 				newVertex.psize = 0;
 

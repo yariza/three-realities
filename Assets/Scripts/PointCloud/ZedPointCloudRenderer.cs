@@ -14,11 +14,14 @@ public class ZedPointCloudRenderer : Renderable
     [SerializeField, Range(0.1f, 2)]
     float _resolutionScale = 1;
 
-    [SerializeField, Range(0, 0.1f)]
+    [SerializeField, Range(0, 10f)]
     float _particleSize = 0.05f;
 
-    [SerializeField, Range(0, 1f)]
+    [SerializeField, Range(0, 10f)]
     float _particleSizeBump = 0.1f;
+
+    [SerializeField]
+    bool _sizeInPixels = false;
 
     [SerializeField]
     PhysicsGrid _grid;
@@ -51,6 +54,7 @@ public class ZedPointCloudRenderer : Renderable
 
     Camera _camera;
     Material _material;
+    Material _monitorMaterial;
     int _numberOfPoints;
 
     int _particleSizeId;
@@ -91,6 +95,7 @@ public class ZedPointCloudRenderer : Renderable
             _grid = FindObjectOfType<PhysicsGrid>();
         }
         _material = new Material(_pointCloudShader);
+        _monitorMaterial = new Material(_pointCloudShader);
 
         _manager = CustomZedManager.Instance;
         // _commandBuffer = new CommandBuffer();
@@ -121,12 +126,7 @@ public class ZedPointCloudRenderer : Renderable
         // }
     }
 
-    public override void Render(CommandBuffer commandBuffer)
-    {
-        commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0, MeshTopology.Points, 1, _numberOfPoints);
-    }
-
-    void Update()
+    public override void Render(CommandBuffer commandBuffer, bool monitor)
     {
         if (!_manager.IsZEDReady) return;
 
@@ -136,39 +136,55 @@ public class ZedPointCloudRenderer : Renderable
             _manager.HMDSyncRotation.w == 0)
             return;
 
+        var material = monitor ? _monitorMaterial : _material;
+
         var mat = Matrix4x4.TRS(_camera.transform.position, _manager.HMDSyncRotation, Vector3.one);
 
-        _material.SetMatrix("_Transform", mat);
+        material.SetMatrix("_Transform", mat);
         // Vector3 pos0 = _pos0 + new Vector3(-1f * _offset.x, _offset.y, _offset.z);
         // Vector3 pos1 = _pos1 + new Vector3( 1f * _offset.x, _offset.y, _offset.z);
 
         // _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, _scale0);
         // _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, _scale1);
-        _material.SetMatrixArray("_PlaneMatrices", _planeMatrices);
+        material.SetMatrixArray("_PlaneMatrices", _planeMatrices);
 
         _transformMatrices[0] = mat * _planeMatrices[0];
         _transformMatrices[1] = mat * _planeMatrices[1];
 
-        _material.SetMatrixArray("_TransformMatrices", _transformMatrices);
+        material.SetMatrixArray("_TransformMatrices", _transformMatrices);
 
-        _material.SetFloat(_particleSizeId, _particleSize);
-        _material.SetFloat(_particleSizeBumpId, _particleSizeBump);
+        material.SetFloat(_particleSizeId, _particleSize * (monitor ? 2.5f : 1f));
+        material.SetFloat(_particleSizeBumpId, _particleSizeBump * (monitor ? 2.5f : 1f));
 
         if (_grid != null)
         {
-            _material.SetVector(_grid.idPhysicsGridSize, _grid.size);
-            _material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
-            _material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
-            _material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+            material.SetVector(_grid.idPhysicsGridSize, _grid.size);
+            material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
+            material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
+            material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
         }
 
-        _material.SetTexture("_DepthTextureLeft", _depthTexture);
-        _material.SetTexture("_DepthTextureRight", _depthRightTexture);
-        // _material.SetTexture("_NormalTextureLeft", _normalTexture);
-        // _material.SetTexture("_NormalTextureRight", _normalRightTexture);
-        _material.SetTexture("_ColorTextureLeft", _colorTexture);
-        _material.SetTexture("_ColorTextureRight", _colorRightTexture);
+        material.SetTexture("_DepthTextureLeft", _depthTexture);
+        material.SetTexture("_DepthTextureRight", _depthRightTexture);
+        // material.SetTexture("_NormalTextureLeft", _normalTexture);
+        // material.SetTexture("_NormalTextureRight", _normalRightTexture);
+        material.SetTexture("_ColorTextureLeft", _colorTexture);
+        material.SetTexture("_ColorTextureRight", _colorRightTexture);
 
+        if (_sizeInPixels)
+        {
+            material.EnableKeyword("SIZE_IN_PIXELS");
+        }
+        else
+        {
+            material.DisableKeyword("SIZE_IN_PIXELS");
+        }
+
+        commandBuffer.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Points, 1, _numberOfPoints);
+    }
+
+    void Update()
+    {
         // if (_memoizedCameraEvent != _cameraEvent)
         // {
         //     _camera.RemoveCommandBuffer(_memoizedCameraEvent, _commandBuffer);
@@ -199,6 +215,7 @@ public class ZedPointCloudRenderer : Renderable
         _numberOfPoints = pointWidth * pointHeight;
 
         _material.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
+        _monitorMaterial.SetVector("_TexelSize", new Vector4(1f / pointWidth, 1f / pointHeight, pointWidth, pointHeight));
 
         if (_handMask == null)
         {
@@ -207,6 +224,7 @@ public class ZedPointCloudRenderer : Renderable
         if (_handMask != null)
         {
             _material.SetTexture("_HandMaskTex", _handMask.texture);
+            _monitorMaterial.SetTexture("_HandMaskTex", _handMask.texture);
         }
 
         if (_grid != null)
@@ -215,6 +233,11 @@ public class ZedPointCloudRenderer : Renderable
             _material.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
             _material.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
             _material.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
+
+            _monitorMaterial.SetVector(_grid.idPhysicsGridSize, _grid.size);
+            _monitorMaterial.SetVector(_grid.idPhysicsGridSizeInv, _grid.invSize);
+            _monitorMaterial.SetTexture(_grid.idPhysicsGridPositionTex, _grid.positionTexture);
+            _monitorMaterial.SetTexture(_grid.idPhysicsGridVelocityTex, _grid.velocityTexture);
         }
 
         _depthTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH);

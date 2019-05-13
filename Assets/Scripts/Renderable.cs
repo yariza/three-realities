@@ -5,5 +5,5 @@ using UnityEngine.Rendering;
 
 public abstract class Renderable : MonoBehaviour
 {
-    public abstract void Render(CommandBuffer commandBuffer);
+    public abstract void Render(CommandBuffer commandBuffer, bool monitor);
 }

@@ -203,7 +203,7 @@ public class ZedParticleRenderer : Renderable
         CustomZedManager.OnZEDReady -= OnZedReady;
     }
 
-    public override void Render(CommandBuffer commandBuffer)
+    public override void Render(CommandBuffer commandBuffer, bool monitor)
     {
         if (!_manager.IsZEDReady) return;
 

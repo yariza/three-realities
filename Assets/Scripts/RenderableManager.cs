@@ -33,18 +33,18 @@ public class RenderableManager : MonoBehaviour
 
     List<Renderable> _renderables = new List<Renderable>();
 
-    CommandBuffer _commandBuffer = null;
-    public CommandBuffer commandBuffer
-    {
-        get
-        {
-            if (_commandBuffer == null)
-            {
-                _commandBuffer = new CommandBuffer();
-            }
-            return _commandBuffer;
-        }
-    }
+    // CommandBuffer _commandBuffer = null;
+    // public CommandBuffer commandBuffer
+    // {
+    //     get
+    //     {
+    //         if (_commandBuffer == null)
+    //         {
+    //             _commandBuffer = new CommandBuffer();
+    //         }
+    //         return _commandBuffer;
+    //     }
+    // }
 
     #endregion
 
@@ -65,14 +65,14 @@ public class RenderableManager : MonoBehaviour
         _renderables.Remove(renderable);
     }
 
-    private void Update()
-    {
-        _commandBuffer.Clear();
-        for (int i = 0; i < _renderables.Count; i++)
-        {
-            _renderables[i].Render(_commandBuffer);
-        }
-    }
+    // private void Update()
+    // {
+    //     _commandBuffer.Clear();
+    //     for (int i = 0; i < _renderables.Count; i++)
+    //     {
+    //         _renderables[i].Render(_commandBuffer);
+    //     }
+    // }
 
     public void SpawnPortalInSeconds(GameObject portal, float seconds)
     {
@@ -85,13 +85,13 @@ public class RenderableManager : MonoBehaviour
         portal.SetActive(true);
     }
 
-    // public void Render(CommandBuffer commandBuffer)
-    // {
-        // for (int i = 0; i < _renderables.Count; i++)
-        // {
-            // _renderables[i].Render(commandBuffer);
-        // }
-    // }
+    public void Render(CommandBuffer commandBuffer, bool monitor)
+    {
+        for (int i = 0; i < _renderables.Count; i++)
+        {
+            _renderables[i].Render(commandBuffer, monitor);
+        }
+    }
 
     #endregion
 

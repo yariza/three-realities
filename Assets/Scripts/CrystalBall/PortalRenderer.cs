@@ -72,7 +72,7 @@ public class PortalRenderer : Renderable
         }
     }
 
-    public override void Render(CommandBuffer commandBuffer)
+    public override void Render(CommandBuffer commandBuffer, bool monitor)
     {
         commandBuffer.DrawProcedural(Matrix4x4.identity, _fillZMaterial, 0, MeshTopology.Triangles, 3, 1, null);
         commandBuffer.DrawMesh(_meshFilter.sharedMesh, transform.localToWorldMatrix, _portalMaterial, 0, 0, null);

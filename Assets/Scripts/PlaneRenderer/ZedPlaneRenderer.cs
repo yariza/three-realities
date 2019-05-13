@@ -82,12 +82,7 @@ public class ZedPlaneRenderer : Renderable
         // }
     }
 
-    public override void Render(CommandBuffer commandBuffer)
-    {
-        commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
-    }
-
-    private void Update()
+    public override void Render(CommandBuffer commandBuffer, bool monitor)
     {
         if (!_manager.IsZEDReady) return;
 
@@ -111,6 +106,12 @@ public class ZedPlaneRenderer : Renderable
         // _propertyBlock.SetTexture("_NormalTextureRight", _normalRightTexture);
         _propertyBlock.SetTexture("_ColorTextureLeft", _colorTexture);
         _propertyBlock.SetTexture("_ColorTextureRight", _colorRightTexture);
+
+        commandBuffer.DrawMesh(_quadMesh, Matrix4x4.identity, _material, 0, -1, _propertyBlock);
+    }
+
+    private void Update()
+    {
 
     }
 
