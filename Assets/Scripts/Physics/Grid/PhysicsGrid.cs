@@ -48,6 +48,12 @@ public class PhysicsGrid : MonoBehaviour
 	float _damping = 0.1f;
 
 	[SerializeField]
+	float _randomInterval = 1f;
+
+	[SerializeField]
+	float _randomVelocity = 0.5f;
+
+	[SerializeField]
     RenderTexture _positionTexture;
     public RenderTexture positionTexture
     {
@@ -103,6 +109,7 @@ public class PhysicsGrid : MonoBehaviour
 	int _kernelEndGrab;
 	int _kernelUpdateVelocity;
 	int _kernelUpdatePosition;
+	int _kernelSetRandomVelocity;
 
 	int _groupsX;
 	int _groupsY;
@@ -116,6 +123,8 @@ public class PhysicsGrid : MonoBehaviour
 	Vector4[] _grabCurPositions = new Vector4[MAX_HANDS];
 	Vector4[] _grabPrevPositions = new Vector4[MAX_HANDS];
 	Vector4[] _grabDeltaPositions = new Vector4[MAX_HANDS];
+
+	float _lastRandomTime;
 
     void Awake()
     {
@@ -158,6 +167,7 @@ public class PhysicsGrid : MonoBehaviour
 		_kernelEndGrab = _computeShader.FindKernel("EndGrab");
 		_kernelUpdateVelocity = _computeShader.FindKernel("UpdateVelocity");
 		_kernelUpdatePosition = _computeShader.FindKernel("UpdatePosition");
+		_kernelSetRandomVelocity = _computeShader.FindKernel("SetRandomVelocity");
     }
 
 	void OnEnable()
@@ -212,6 +222,7 @@ public class PhysicsGrid : MonoBehaviour
         _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridPositionTex, _positionTexture);
         _computeShader.SetTexture(_kernelUpdateVelocity, _idPhysicsGridVelocityTex, _velocityTexture);
 
+		_computeShader.SetTexture(_kernelSetRandomVelocity, _idPhysicsGridVelocityTex, _velocityTexture);
     }
 
     void Update()
@@ -263,6 +274,16 @@ public class PhysicsGrid : MonoBehaviour
 		_computeShader.Dispatch(_kernelUpdatePosition, _groupsX, _groupsY, _groupsZ);
 
 		_computeShader.Dispatch(_kernelUpdateVelocity, _groupsX, _groupsY, _groupsZ);
+
+		if (Time.time - _lastRandomTime > _randomInterval)
+		{
+			_computeShader.SetInts("_RandomCell", Random.Range(0, _resolution.x), Random.Range(0, _resolution.y), Random.Range(0, _resolution.z));
+			_computeShader.SetVector("_RandomVelocity", Random.onUnitSphere * _randomVelocity);
+
+			_computeShader.Dispatch(_kernelSetRandomVelocity, 1, 1, 1);
+
+			_lastRandomTime = Time.time;
+		}
 
 		for (int i = 0; i < MAX_HANDS; i++)
 		{

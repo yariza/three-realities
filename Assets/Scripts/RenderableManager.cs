@@ -74,6 +74,17 @@ public class RenderableManager : MonoBehaviour
         }
     }
 
+    public void SpawnPortalInSeconds(GameObject portal, float seconds)
+    {
+        StartCoroutine(CoroutineSpawnPortalInSeconds(portal, seconds));
+    }
+
+    private IEnumerator CoroutineSpawnPortalInSeconds(GameObject portal, float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        portal.SetActive(true);
+    }
+
     // public void Render(CommandBuffer commandBuffer)
     // {
         // for (int i = 0; i < _renderables.Count; i++)

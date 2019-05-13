@@ -29,6 +29,12 @@ public class ZedPointCloudRenderer : Renderable
     [SerializeField]
     Vector3 _offset = Vector3.zero;
 
+    [SerializeField]
+    Vector3 _screenOffset = new Vector3(0.003651896f, 0.001898488f, 0.15f);
+
+    [SerializeField]
+    Vector3 _screenScale = new Vector3(0.281675f, 0.1584422f, 1);
+
     // [SerializeField]
     // CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
 
@@ -133,11 +139,11 @@ public class ZedPointCloudRenderer : Renderable
         var mat = Matrix4x4.TRS(_camera.transform.position, _manager.HMDSyncRotation, Vector3.one);
 
         _material.SetMatrix("_Transform", mat);
-        Vector3 pos0 = _pos0 + new Vector3(-1f * _offset.x, _offset.y, _offset.z);
-        Vector3 pos1 = _pos1 + new Vector3( 1f * _offset.x, _offset.y, _offset.z);
+        // Vector3 pos0 = _pos0 + new Vector3(-1f * _offset.x, _offset.y, _offset.z);
+        // Vector3 pos1 = _pos1 + new Vector3( 1f * _offset.x, _offset.y, _offset.z);
 
-        _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, _scale0);
-        _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, _scale1);
+        // _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, _scale0);
+        // _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, _scale1);
         _material.SetMatrixArray("_PlaneMatrices", _planeMatrices);
 
         _transformMatrices[0] = mat * _planeMatrices[0];
@@ -179,8 +185,8 @@ public class ZedPointCloudRenderer : Renderable
 
     #endregion
 
-    Vector3 _pos0, _pos1;
-    Vector3 _scale0, _scale1;
+    // Vector3 _pos0, _pos1;
+    // Vector3 _scale0, _scale1;
 
     #region Zed events
 
@@ -218,25 +224,34 @@ public class ZedPointCloudRenderer : Renderable
         _colorTexture = zedCamera.CreateTextureImageType(sl.VIEW.LEFT);
         _colorRightTexture = zedCamera.CreateTextureImageType(sl.VIEW.RIGHT);
 
-		float plane_distance =0.15f;
-		Vector4 opticalCenters = zedCamera.ComputeOpticalCenterOffsets(plane_distance);
+		// float plane_distance =0.15f;
+		// Vector4 opticalCenters = zedCamera.ComputeOpticalCenterOffsets(plane_distance);
 
-        var pos0 = new Vector3(opticalCenters.x, -1.0f * opticalCenters.y,plane_distance);
-        var pos1 = new Vector3(opticalCenters.z, -1.0f * opticalCenters.w,plane_distance);
+        // var pos0 = new Vector3(opticalCenters.x, -1.0f * opticalCenters.y,plane_distance);
+        // var pos1 = new Vector3(opticalCenters.z, -1.0f * opticalCenters.w,plane_distance);
 
-        var projMatrix = zedCamera.Projection;
-        var fovY = GetFOVYFromProjectionMatrix(projMatrix);
+        // var projMatrix = zedCamera.Projection;
+        // var fovY = GetFOVYFromProjectionMatrix(projMatrix);
 
-        var scale0 = scale(pos0, fovY);
-        var scale1 = scale(pos1, fovY);
+        // var scale0 = scale(pos0, fovY);
+        // var scale1 = scale(pos1, fovY);
 
-        _pos0 = pos0;
-        _pos1 = pos1;
-        _scale0 = scale0;
-        _scale1 = scale1;
+        // _pos0 = pos0;
+        // _pos1 = pos1;
+        // _scale0 = scale0;
+        // _scale1 = scale1;
+
+        // pos0 += new Vector3(-1f * _offset.x, _offset.y, _offset.z);
+        // pos1 += new Vector3( 1f * _offset.x, _offset.y, _offset.z);
+
+        var pos0 = _screenOffset;
+        var pos1 = _screenOffset;
+
+        var scale0 = _screenScale;
+        var scale1 = _screenScale;
 
         pos0 += new Vector3(-1f * _offset.x, _offset.y, _offset.z);
-        pos1 += new Vector3( 1f * _offset.x, _offset.y, _offset.z);
+        pos1 += _offset;
 
         _planeMatrices[0] = Matrix4x4.TRS(pos0, Quaternion.identity, scale0);
         _planeMatrices[1] = Matrix4x4.TRS(pos1, Quaternion.identity, scale1);

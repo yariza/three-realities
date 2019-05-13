@@ -4,6 +4,7 @@
 #pragma kernel EndGrab
 #pragma kernel UpdateVelocity
 #pragma kernel UpdatePosition
+#pragma kernel SetRandomVelocity
 
 RWTexture3D<float4> _PhysicsGridPositionTex;
 RWTexture3D<float4> _PhysicsGridVelocityTex;
@@ -91,6 +92,17 @@ void UpdatePosition(uint3 id : SV_DISPATCHTHREADID)
 	_PhysicsGridPositionTex[id.xyz] = position;
 	float3 velocity = (position.xyz - oldPosition) * _Time.w;
 	_PhysicsGridVelocityTex[id.xyz] = float4(velocity, 0);
+}
+
+uint3 _RandomCell;
+float3 _RandomVelocity;
+
+[numthreads(1,1,1)]
+void SetRandomVelocity(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 velocity = _PhysicsGridVelocityTex[_RandomCell];
+	velocity.xyz += _RandomVelocity;
+	_PhysicsGridVelocityTex[_RandomCell] = velocity;
 }
 
 [numthreads(8,8,8)]

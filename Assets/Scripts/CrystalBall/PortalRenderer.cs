@@ -16,6 +16,15 @@ public class PortalRenderer : Renderable
     [SerializeField]
     Renderable _target;
 
+    [SerializeField]
+    PortalRenderer _nextPortal;
+
+    [SerializeField, Range(10, 120)]
+    float _nextPortalWaitSeconds = 30;
+
+    [SerializeField]
+    AudioClip _portalSound;
+
     #endregion
 
     #region Fields
@@ -55,6 +64,12 @@ public class PortalRenderer : Renderable
     {
         RenderableManager.instance.RemoveFirstRenderable();
         gameObject.SetActive(false);
+        SoundManager.instance.PlayOneShot(_portalSound, 0.05f);
+        if (_nextPortal != null)
+        {
+            // _nextPortal.gameObject.SetActive(true);
+            RenderableManager.instance.SpawnPortalInSeconds(_nextPortal.gameObject, _nextPortalWaitSeconds);
+        }
     }
 
     public override void Render(CommandBuffer commandBuffer)

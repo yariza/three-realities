@@ -9,6 +9,9 @@ Shader "Unlit/ImposterOverlay"
         _RimFadeOffset("Rim Fade Offset", Range(0, 1)) = 0.1
         _Scale ("Scale", Float) = 1
         _Radius ("Radius", Float) = 0.5
+        _NoiseMagnitude("Noise Magnitude", Float) = 0.2
+        _NoiseFrequency("Noise Frequency", Range(0, 10)) = 1
+        _NoiseMotion("Noise Motion", Range(0, 10)) = 1
     }
     SubShader
     {
@@ -26,6 +29,7 @@ Shader "Unlit/ImposterOverlay"
             #pragma fragment frag
 
             #include "UnityCG.cginc"
+            #include "./SimplexNoise3D.cginc"
 
             struct v2f
             {
@@ -45,6 +49,10 @@ Shader "Unlit/ImposterOverlay"
             float _RimFadeOffset;
             float _Scale;
             float _Radius;
+
+            float _NoiseMagnitude;
+            float _NoiseFrequency;
+            float _NoiseMotion;
 
             v2f vert (appdata_base v)
             {
@@ -77,29 +85,59 @@ Shader "Unlit/ImposterOverlay"
                 return (-b - sqrt((b*b) - 4.0*a*c))/(2.0*a);
             }
 
+            float map(float3 pos, float3 center)
+            {
+                float3 r = pos - center;
+                float3 rn = normalize(r);
+                float noise = snoise(rn * _NoiseFrequency + _Time.yyy * _NoiseMotion * float3(0.13, 0.82, 0.11));
+                return length(r) - _Radius + noise * _NoiseMagnitude;
+            }
+
             float4 frag (v2f i) : SV_Target
             {
                 float3 worldPos = i.worldPos;
                 float3 ro = _WorldSpaceCameraPos;
                 float3 rd = normalize(worldPos - ro);
                 float3 so = mul(unity_ObjectToWorld, float4(0.0, 0.0, 0.0, 1.0));
-                float sr = _Radius;
+                // float sr = _Radius;
 
-                float t = raySphereIntersect(ro, rd, so, sr);
-                clip(t);
+                const float eps = 1e-4;
 
-                float3 p = ro + rd * t;
+                bool hit = false;
+
+                float t = 0;
+
+                for (uint i = 0; i < 50; i++)
+                {
+                    float dist = map(ro, so);
+                    ro += dist * rd;
+                    t += dist;
+
+                    if (t < eps)
+                    {
+                        hit = true;
+                        break;
+                    }
+                }
+
+                if (!hit) discard;
+
+                // float t = raySphereIntersect(ro, rd, so, sr);
+                // clip(t);
+
+                // float3 p = ro + rd * t;
+                float3 p = ro;
 
                 float3 n = normalize(p - so);
                 float3 v = -rd;
 
-                half fr = pow(dot(v, n), _Fresnel);
+                half fr = pow(saturate(dot(v, n)), _Fresnel);
                 float fade = saturate((t - _RimFadeOffset) * _RimFadeInvDistance);
 
                 fr = lerp(1.0, fr, fade);
 
                 half3 rimColor = _RimColor.rgb * saturate((t - _RimFadeOffset) * _RimFadeInvDistance);
-                half rim = pow(1.0 - dot(v, n), _RimFresnel);
+                half rim = pow(1.0 - saturate(dot(v, n)), _RimFresnel);
 
                 float4 col;
                 col = float4(rimColor * rim, fr);

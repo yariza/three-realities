@@ -65,6 +65,9 @@ Material:
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
+    - _NoiseFrequency: 1
+    - _NoiseMagnitude: 0.01
+    - _NoiseMotion: 0.5
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _Radius: 0.12

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Leap.Unity;
 
-public class ZedParticleRenderer : MonoBehaviour
+public class ZedParticleRenderer : Renderable
 {
     #region Serialized fields
 
@@ -73,8 +73,8 @@ public class ZedParticleRenderer : MonoBehaviour
     [SerializeField, Range(0, 0.5f)]
     float _handRadius = 0.2f;
 
-    [SerializeField]
-    CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
+    // [SerializeField]
+    // CameraEvent _cameraEvent = CameraEvent.AfterForwardOpaque;
 
     #endregion
 
@@ -96,7 +96,7 @@ public class ZedParticleRenderer : MonoBehaviour
     Material _kernelMaterial;
     MaterialPropertyBlock _propertyBlock;
     Camera _camera;
-    CommandBuffer _commandBuffer;
+    // CommandBuffer _commandBuffer;
     const int HANDS_COUNT = 2;
     Vector4[] _handCenters = new Vector4[HANDS_COUNT];
 
@@ -153,7 +153,7 @@ public class ZedParticleRenderer : MonoBehaviour
         _propertyBlock = new MaterialPropertyBlock();
 
         _camera = Camera.main;
-        _commandBuffer = new CommandBuffer();
+        // _commandBuffer = new CommandBuffer();
 
         if (_handMask == null)
         {
@@ -179,8 +179,8 @@ public class ZedParticleRenderer : MonoBehaviour
 
         // _propertyBlock.SetBuffer(_idParticleBuffer, _particleBuffer);
 
-        _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
-        _memoizedCameraEvent = _cameraEvent;
+        // _camera.AddCommandBuffer(_cameraEvent, _commandBuffer);
+        // _memoizedCameraEvent = _cameraEvent;
 
         if (_manager.IsZEDReady)
         {
@@ -195,12 +195,38 @@ public class ZedParticleRenderer : MonoBehaviour
     private void OnDisable()
     {
         // _particleBuffer.Release();
-        if (_camera != null)
-        {
-            _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
-        }
+        // if (_camera != null)
+        // {
+            // _camera.RemoveCommandBuffer(_cameraEvent, _commandBuffer);
+        // }
 
         CustomZedManager.OnZEDReady -= OnZedReady;
+    }
+
+    public override void Render(CommandBuffer commandBuffer)
+    {
+        if (!_manager.IsZEDReady) return;
+
+        if (_manager.HMDSyncRotation.x == 0 &&
+            _manager.HMDSyncRotation.y == 0 &&
+            _manager.HMDSyncRotation.z == 0 &&
+            _manager.HMDSyncRotation.w == 0)
+            return;
+
+        _propertyBlock.SetTexture(_idPositionBuffer, _positionBuffer2);
+        _propertyBlock.SetTexture(_idColorBuffer, _colorBuffer2);
+        _propertyBlock.SetFloat(_idScaleMin, _scale);
+        _propertyBlock.SetFloat(_idScaleMax, _scale);
+        _propertyBlock.SetFloat(_idRandomSeed, _randomSeed);
+
+        // commandBuffer.Clear();
+        var numParticles = _particleResolution.x * _particleResolution.y;
+        for (int i = 0; i < numParticles; i += _batchSize)
+        {
+            _propertyBlock.SetInt("_InstanceOffset", i);
+            commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0,
+                MeshTopology.Triangles, 3, Mathf.Min(_batchSize, numParticles - i), _propertyBlock);
+        }
     }
 
     private void Update()
@@ -216,20 +242,6 @@ public class ZedParticleRenderer : MonoBehaviour
         UpdateKernelShader();
         SwapBuffersAndInvokeKernels();
 
-        _propertyBlock.SetTexture(_idPositionBuffer, _positionBuffer2);
-        _propertyBlock.SetTexture(_idColorBuffer, _colorBuffer2);
-        _propertyBlock.SetFloat(_idScaleMin, _scale);
-        _propertyBlock.SetFloat(_idScaleMax, _scale);
-        _propertyBlock.SetFloat(_idRandomSeed, _randomSeed);
-
-        _commandBuffer.Clear();
-        var numParticles = _particleResolution.x * _particleResolution.y;
-        for (int i = 0; i < numParticles; i += _batchSize)
-        {
-            _propertyBlock.SetInt("_InstanceOffset", i);
-            _commandBuffer.DrawProcedural(Matrix4x4.identity, _material, 0,
-                MeshTopology.Triangles, 3, Mathf.Min(_batchSize, numParticles - i), _propertyBlock);
-        }
 
         // if (_cameraEvent != _memoizedCameraEvent)
         // {
@@ -282,6 +294,11 @@ public class ZedParticleRenderer : MonoBehaviour
 
     #endregion
 
+    float _leftHandAliveTime;
+    bool _prevLeftHandAlive;
+    float _rightHandAliveTime;
+    bool _prevRightHandAlive;
+
     #region Private methods
 
     void UpdateKernelShader()
@@ -297,12 +314,27 @@ public class ZedParticleRenderer : MonoBehaviour
         if (_useHandMask)
         {
             m.EnableKeyword("USE_HAND_POSITION");
+
             var left = Hands.Left;
-            var leftPos = left != null ? left.PalmPosition.ToVector3() : (Vector3.one * 1e8f);
-            _handCenters[0] = new Vector4(leftPos.x, leftPos.y, leftPos.z, left != null ? 1f : 0f);
+            if (left != null && !_prevLeftHandAlive)
+            {
+                _leftHandAliveTime = Time.time;
+            }
+            _prevLeftHandAlive = left != null;
+            var leftHandAlive = left != null && Time.time - _leftHandAliveTime > 1f;
+
             var right = Hands.Right;
-            var rightPos = right != null ? right.PalmPosition.ToVector3() : (Vector3.one * 1e8f);
-            _handCenters[1] = new Vector4(rightPos.x, rightPos.y, rightPos.z, right != null ? 1f : 0f);
+            if (right != null && !_prevRightHandAlive)
+            {
+                _rightHandAliveTime = Time.time;
+            }
+            _prevRightHandAlive = right != null;
+            var rightHandAlive = right != null && Time.time - _rightHandAliveTime > 1f;
+
+            var leftPos = leftHandAlive ? left.PalmPosition.ToVector3() : (Vector3.one * 1e8f);
+            _handCenters[0] = new Vector4(leftPos.x, leftPos.y, leftPos.z, leftHandAlive ? 1f : 0f);
+            var rightPos = rightHandAlive ? right.PalmPosition.ToVector3() : (Vector3.one * 1e8f);
+            _handCenters[1] = new Vector4(rightPos.x, rightPos.y, rightPos.z, rightHandAlive ? 1f : 0f);
             m.SetVectorArray("_HandCenters", _handCenters);
             m.SetTexture("_HandTex", _handMask.texture);
             m.SetFloat("_HandRadius", _handRadius);

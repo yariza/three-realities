@@ -16,6 +16,12 @@ public class ZedPlaneRenderer : Renderable
     [SerializeField]
     Vector3 _offset = new Vector3(0.0315f, 0, 0.115f);
 
+    [SerializeField]
+    Vector3 _screenOffset = new Vector3(0.003651896f, 0.001898488f, 0.15f);
+
+    [SerializeField]
+    Vector3 _screenScale = new Vector3(0.281675f, 0.1584422f, 1);
+
     // [SerializeField]
     // CameraEvent _cameraEvent = CameraEvent.AfterForwardAlpha;
 
@@ -25,7 +31,7 @@ public class ZedPlaneRenderer : Renderable
 
     CustomZedManager _manager;
     Camera _camera;
-    CommandBuffer _commandBuffer;
+    // CommandBuffer _commandBuffer;
     MaterialPropertyBlock _propertyBlock;
 
     const int NUM_EYES = 2;
@@ -53,7 +59,7 @@ public class ZedPlaneRenderer : Renderable
         _manager = CustomZedManager.Instance;
         _camera = Camera.main;
 
-        _commandBuffer = new CommandBuffer();
+        // _commandBuffer = new CommandBuffer();
         _propertyBlock = new MaterialPropertyBlock();
     }
 
@@ -101,10 +107,11 @@ public class ZedPlaneRenderer : Renderable
         _propertyBlock.SetMatrixArray("_TransformMatrices", _transformMatrices);
         _propertyBlock.SetTexture("_DepthTextureLeft", _depthTexture);
         _propertyBlock.SetTexture("_DepthTextureRight", _depthRightTexture);
-        _propertyBlock.SetTexture("_NormalTextureLeft", _normalTexture);
-        _propertyBlock.SetTexture("_NormalTextureRight", _normalRightTexture);
+        // _propertyBlock.SetTexture("_NormalTextureLeft", _normalTexture);
+        // _propertyBlock.SetTexture("_NormalTextureRight", _normalRightTexture);
         _propertyBlock.SetTexture("_ColorTextureLeft", _colorTexture);
         _propertyBlock.SetTexture("_ColorTextureRight", _colorRightTexture);
+
     }
 
     #endregion
@@ -116,22 +123,28 @@ public class ZedPlaneRenderer : Renderable
         var zedCamera = _manager.zedCamera;
         _depthTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH);
         _depthRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.DEPTH_RIGHT);
-        _normalTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS);
-        _normalRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS_RIGHT);
+        // _normalTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS);
+        // _normalRightTexture = zedCamera.CreateTextureMeasureType(sl.MEASURE.NORMALS_RIGHT);
         _colorTexture = zedCamera.CreateTextureImageType(sl.VIEW.LEFT);
         _colorRightTexture = zedCamera.CreateTextureImageType(sl.VIEW.RIGHT);
 
-		float plane_distance =0.15f;
-		Vector4 opticalCenters = zedCamera.ComputeOpticalCenterOffsets(plane_distance);
+		// float plane_distance =0.15f;
+		// Vector4 opticalCenters = zedCamera.ComputeOpticalCenterOffsets(plane_distance);
 
-        var pos0 = new Vector3(opticalCenters.x, -1.0f * opticalCenters.y,plane_distance);
-        var pos1 = new Vector3(opticalCenters.z, -1.0f * opticalCenters.w,plane_distance);
+        // var pos0 = new Vector3(opticalCenters.x, -1.0f * opticalCenters.y,plane_distance);
+        // var pos1 = new Vector3(opticalCenters.z, -1.0f * opticalCenters.w,plane_distance);
 
-        var projMatrix = zedCamera.Projection;
-        var fovY = GetFOVYFromProjectionMatrix(projMatrix);
+        // var projMatrix = zedCamera.Projection;
+        // var fovY = GetFOVYFromProjectionMatrix(projMatrix);
 
-        var scale0 = scale(pos0, fovY);
-        var scale1 = scale(pos1, fovY);
+        // var scale0 = scale(pos0, fovY);
+        // var scale1 = scale(pos1, fovY);
+
+        var pos0 = _screenOffset;
+        var pos1 = _screenOffset;
+
+        var scale0 = _screenScale;
+        var scale1 = _screenScale;
 
         pos0 += new Vector3(-1f * _offset.x, _offset.y, _offset.z);
         pos1 += _offset;

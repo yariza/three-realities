@@ -592,7 +592,7 @@ public class CustomZedManager : MonoBehaviour
     /// </summary>
     public static CustomZedManager Instance
     {
-        get { return instance ?? (instance = new GameObject("ZEDManager").AddComponent<CustomZedManager>()); }
+        get { return instance ?? (instance = FindObjectOfType<CustomZedManager>()); }
     }
 
 
