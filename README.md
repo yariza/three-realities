@@ -6,6 +6,8 @@ _three realities_ is a mixed reality experience that explores the boundary betwe
 
 ## Installation
 
+Download the latest build from the [releases](https://github.com/yariza/three-realities/releases) page.
+
 - [Oculus Rift Setup](https://www.oculus.com/setup/)
 - [Leap Motion Orion Beta](https://developer.leapmotion.com/get-started/)
 - [NVIDIA Graphics Drivers](https://www.nvidia.com/Download/Find.aspx?lang=en-us)
