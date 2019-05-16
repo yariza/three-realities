@@ -34,7 +34,7 @@ Note that while the ZED mini is mounted in the center of the headset, the Leap M
 
 ## Hand Calibration
 
-On startup of the executable, the virtual hand positions may not be perfectly aligned to the user’s hands. This is because we had to place the Leap Motion towards the bottom of the VR headset in order to fit it with a ZED camera as well when it is designed to be in the center of the headset. Keyboard controls are provided to move the alignment of the virtual Leap hands so that someone running the prototype can manually calibrate their hands. On the number pad, these controls are:
+On startup of the executable, the virtual hand positions may not be perfectly aligned to the user’s hands. This is because we had to place the Leap Motion towards the bottom of the VR headset in order to fit it with a ZED camera as well when it is designed to be in the center of the headset. Keyboard controls are provided to move the alignment of the virtual Leap hands so that someone running the experience can manually calibrate their hands. On the number pad, these controls are:
 
 - Keypad 4 - Move left
 - Keypad 6 - Move right
@@ -43,7 +43,7 @@ On startup of the executable, the virtual hand positions may not be perfectly al
 - Keypad 5 - Move away from player
 - Keypad 8 - Move towards player
 
-Note: Once hand positions are calibrated for a particular executable, those settings will be saved across sessions. However, they will need to be calibrated for each demo!
+Note: Once hand positions are calibrated for a particular executable, those settings will be saved across sessions.
 
 ## Debug GUI / Hotkeys
 
