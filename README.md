@@ -21,7 +21,7 @@ As with the Graphics Drivers, it is recommended to select the Custom install opt
 
 - [ZED SDK](https://www.stereolabs.com/developers/release/2.7/#sdkdownloads_anchor)
 
-We support ZED SDK version 2.7. Please download the installer for CUDA 10.0, and Windows.
+This experience supports ZED SDK version 2.7. Please download the installer for CUDA 10.0, and Windows.
 If asked to install CUDA during the install step, quit the installation and install CUDA separately. Then continue with the ZED SDK installation.
 
 ## Headset Setup
